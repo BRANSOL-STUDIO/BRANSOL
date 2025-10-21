@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProjectChat } from '@/hooks/useProjectChat';
 
 export default function DashboardPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const { projects: supabaseProjects, sendMessage: sendSupabaseMessage, createProject: createSupabaseProject, loading: projectsLoading } = useProjectChat(user?.id);
   
   const [activeTab, setActiveTab] = useState('overview');
@@ -285,7 +285,7 @@ export default function DashboardPage() {
   return (
     <>
       <DashboardNav 
-        userName={userData.name} 
+        userName={profile?.full_name || userData.name} 
         notifications={userData.recentMessages}
         onTabChange={setActiveTab}
       />
@@ -302,12 +302,24 @@ export default function DashboardPage() {
             {/* User Profile Section */}
             <div className="p-8 border-b border-gray-200">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                  {userData.name.charAt(0)}
-                </div>
+                {profile?.avatar_url ? (
+                  <img 
+                    src={profile.avatar_url} 
+                    alt={profile.full_name || 'User'} 
+                    className="w-16 h-16 rounded-2xl object-cover shadow-lg"
+                  />
+                ) : profile?.avatar_emoji ? (
+                  <div className={`w-16 h-16 bg-gradient-to-br ${profile.avatar_gradient || 'from-purple-600 to-blue-600'} rounded-2xl flex items-center justify-center text-3xl shadow-lg`}>
+                    {profile.avatar_emoji}
+                  </div>
+                ) : (
+                  <div className={`w-16 h-16 bg-gradient-to-br ${profile?.avatar_gradient || 'from-purple-600 to-blue-600'} rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg`}>
+                    {(profile?.full_name || userData.name).charAt(0)}
+                  </div>
+                )}
                 <div>
-                  <h3 className="font-bold text-gray-900 text-lg">{userData.name}</h3>
-                  <p className="text-sm text-gray-500">{userData.email}</p>
+                  <h3 className="font-bold text-gray-900 text-lg">{profile?.full_name || userData.name}</h3>
+                  <p className="text-sm text-gray-500">{profile?.email || userData.email}</p>
                 </div>
               </div>
               
@@ -422,7 +434,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-                    Welcome back, {userData.name}! 👋
+                    Welcome back, {profile?.full_name || userData.name}! 👋
                   </h1>
                   <p className="text-base text-gray-600">Here&apos;s what&apos;s happening with your projects today.</p>
                 </div>
@@ -1308,13 +1320,31 @@ export default function DashboardPage() {
                     {/* Personal Information */}
                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                       <h3 className="text-xl font-bold text-gray-900 mb-6">Personal Information</h3>
-                      <form className="space-y-4">
+                      <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.currentTarget);
+                        const fullName = `${formData.get('firstName')} ${formData.get('lastName')}`;
+                        const updates = {
+                          full_name: fullName,
+                          phone: formData.get('phone') as string,
+                          company: formData.get('company') as string,
+                          bio: formData.get('bio') as string,
+                        };
+                        if (user && updateProfile) {
+                          // Update in Supabase
+                          await updateProfile(updates);
+                          alert('Profile updated successfully!');
+                        } else {
+                          alert('Login required to save profile changes');
+                        }
+                      }} className="space-y-4">
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
                             <input
                               type="text"
-                              defaultValue="Ricardo"
+                              name="firstName"
+                              defaultValue={profile?.full_name?.split(' ')[0] || 'Ricardo'}
                               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                             />
                           </div>
@@ -1322,7 +1352,8 @@ export default function DashboardPage() {
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
                             <input
                               type="text"
-                              defaultValue="Beaumont"
+                              name="lastName"
+                              defaultValue={profile?.full_name?.split(' ').slice(1).join(' ') || 'Beaumont'}
                               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                             />
                           </div>
@@ -1331,14 +1362,19 @@ export default function DashboardPage() {
                           <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
                           <input
                             type="email"
-                            defaultValue="ricardo@beaumont.com"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            name="email"
+                            value={profile?.email || userData.email}
+                            disabled
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed"
                           />
+                          <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                         </div>
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
                           <input
                             type="tel"
+                            name="phone"
+                            defaultValue={profile?.phone || ''}
                             placeholder="+1 (555) 000-0000"
                             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                           />
@@ -1347,6 +1383,8 @@ export default function DashboardPage() {
                           <label className="block text-sm font-semibold text-gray-700 mb-2">Company</label>
                           <input
                             type="text"
+                            name="company"
+                            defaultValue={profile?.company || ''}
                             placeholder="Your company name"
                             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                           />
@@ -1354,7 +1392,9 @@ export default function DashboardPage() {
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-2">Bio</label>
                           <textarea
+                            name="bio"
                             rows={4}
+                            defaultValue={profile?.bio || ''}
                             placeholder="Tell us a bit about yourself..."
                             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                           />
@@ -1368,6 +1408,7 @@ export default function DashboardPage() {
                           </button>
                           <button
                             type="button"
+                            onClick={() => (document.activeElement as HTMLElement)?.blur()}
                             className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-6 py-3 rounded-xl transition-colors"
                           >
                             Cancel
@@ -1417,9 +1458,21 @@ export default function DashboardPage() {
                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                       <h3 className="text-xl font-bold text-gray-900 mb-6">Profile Picture</h3>
                       <div className="flex flex-col items-center">
-                        <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-blue-600 rounded-3xl flex items-center justify-center text-white text-4xl font-bold shadow-xl mb-4">
-                          {userData.name.charAt(0)}
-                        </div>
+                        {profile?.avatar_url ? (
+                          <img 
+                            src={profile.avatar_url} 
+                            alt={profile.full_name || 'User'} 
+                            className="w-32 h-32 rounded-3xl object-cover shadow-xl mb-4"
+                          />
+                        ) : profile?.avatar_emoji ? (
+                          <div className={`w-32 h-32 bg-gradient-to-br ${profile.avatar_gradient || 'from-purple-600 to-blue-600'} rounded-3xl flex items-center justify-center text-5xl shadow-xl mb-4`}>
+                            {profile.avatar_emoji}
+                          </div>
+                        ) : (
+                          <div className={`w-32 h-32 bg-gradient-to-br ${profile?.avatar_gradient || 'from-purple-600 to-blue-600'} rounded-3xl flex items-center justify-center text-white text-4xl font-bold shadow-xl mb-4`}>
+                            {(profile?.full_name || userData.name).charAt(0)}
+                          </div>
+                        )}
                         <p className="text-sm text-gray-600 mb-4">Current Avatar</p>
                         
                         {/* Upload Button */}
@@ -1438,7 +1491,15 @@ export default function DashboardPage() {
                         {['🎨', '🚀', '⚡', '🎯', '💎', '🔥', '🌟', '💡', '🎭'].map((emoji, index) => (
                           <button
                             key={index}
-                            className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 hover:from-purple-100 hover:to-blue-100 rounded-xl flex items-center justify-center text-3xl transition-all duration-300 hover:scale-110 border-2 border-transparent hover:border-purple-400"
+                            type="button"
+                            onClick={async () => {
+                              if (user && updateProfile) {
+                                await updateProfile({ avatar_emoji: emoji, avatar_url: null });
+                              }
+                            }}
+                            className={`aspect-square bg-gradient-to-br from-gray-100 to-gray-200 hover:from-purple-100 hover:to-blue-100 rounded-xl flex items-center justify-center text-3xl transition-all duration-300 hover:scale-110 border-2 ${
+                              profile?.avatar_emoji === emoji ? 'border-purple-600' : 'border-transparent hover:border-purple-400'
+                            }`}
                           >
                             {emoji}
                           </button>
@@ -1462,7 +1523,15 @@ export default function DashboardPage() {
                         ].map((gradient, index) => (
                           <button
                             key={index}
-                            className={`aspect-square bg-gradient-to-br ${gradient} rounded-xl hover:scale-110 transition-all duration-300 border-2 border-transparent hover:border-gray-400`}
+                            type="button"
+                            onClick={async () => {
+                              if (user && updateProfile) {
+                                await updateProfile({ avatar_gradient: gradient });
+                              }
+                            }}
+                            className={`aspect-square bg-gradient-to-br ${gradient} rounded-xl hover:scale-110 transition-all duration-300 border-2 ${
+                              profile?.avatar_gradient === gradient ? 'border-white shadow-xl' : 'border-transparent hover:border-gray-400'
+                            }`}
                           />
                         ))}
                       </div>
@@ -1478,11 +1547,16 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-gray-600">Member Since</span>
-                          <span className="text-sm font-semibold text-gray-900">Oct 2024</span>
+                          <span className="text-sm font-semibold text-gray-900">
+                            {profile?.created_at 
+                              ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                              : 'Oct 2024'
+                            }
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-gray-600">Plan</span>
-                          <span className="text-sm font-semibold text-purple-600">Professional</span>
+                          <span className="text-sm font-semibold text-purple-600">{profile?.plan || 'Professional'}</span>
                         </div>
                       </div>
                     </div>
