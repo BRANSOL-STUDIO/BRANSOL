@@ -39,10 +39,12 @@ export async function middleware(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser()
 
-    // Optional: Redirect to login if accessing protected routes
-    // if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    //   return NextResponse.redirect(new URL('/login', request.url))
-    // }
+    // Redirect to login if accessing protected routes without authentication
+    if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
+      return NextResponse.redirect(loginUrl);
+    }
 
     return supabaseResponse
   } catch (error) {

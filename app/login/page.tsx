@@ -1,21 +1,25 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signIn, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +32,7 @@ export default function LoginPage() {
       setError(signInError.message);
       setLoading(false);
     } else {
-      router.push('/dashboard');
+      router.push(redirectTo);
     }
   };
 
@@ -131,12 +135,9 @@ export default function LoginPage() {
               </div>
 
               <div className="mt-6 pt-6 border-t border-gray-200 text-center">
-                <Link
-                  href="/dashboard"
-                  className="text-sm text-gray-600 hover:text-gray-900 font-medium"
-                >
-                  ← Continue as guest (demo mode)
-                </Link>
+                <p className="text-sm text-gray-500">
+                  Demo mode not available for Client Portal
+                </p>
               </div>
             </motion.div>
           </div>
@@ -145,6 +146,21 @@ export default function LoginPage() {
 
       <Footer />
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
 
