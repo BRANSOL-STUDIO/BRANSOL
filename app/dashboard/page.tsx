@@ -1339,14 +1339,18 @@ export default function DashboardPage() {
                           };
                           
                           if (user && updateProfile) {
+                            console.log('Updating profile with:', updates);
+                            console.log('User ID:', user.id);
                             await updateProfile(updates);
                             alert('✅ Profile updated successfully! Your changes have been saved.');
                           } else {
+                            console.warn('Cannot update - User:', user, 'UpdateProfile function:', updateProfile);
                             alert('⚠️ Please log in to save profile changes');
                           }
-                        } catch (error) {
+                        } catch (error: any) {
                           console.error('Error updating profile:', error);
-                          alert('❌ Failed to update profile. Please try again.');
+                          console.error('Error details:', error?.message, error?.code);
+                          alert(`❌ Failed to update profile: ${error?.message || 'Unknown error'}`);
                         } finally {
                           setSavingProfile(false);
                         }
