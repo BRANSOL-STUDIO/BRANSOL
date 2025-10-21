@@ -61,18 +61,18 @@ export default function Header() {
           {/* CTAs */}
           <div className="flex items-center space-x-4 flex-shrink-0 z-10">
             <Link
-              href={SITE.ctas.book.href}
-              className="hidden md:flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200 group"
+              href="/dashboard"
+              className="hidden md:flex text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200"
             >
-              <Phone className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-              {SITE.ctas.book.label}
+              Client Portal
             </Link>
             <CartIcon />
             <Link
-              href={SITE.ctas.secondary.href}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg"
+              href={SITE.ctas.book.href}
+              className="hidden md:flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg"
             >
-              {SITE.ctas.secondary.label}
+              <Phone className="w-4 h-4" />
+              {SITE.ctas.book.label}
             </Link>
           </div>
         </div>

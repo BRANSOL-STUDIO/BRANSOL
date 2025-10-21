@@ -1,8 +1,8 @@
 "use client";
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Check, Clock, Users, ShoppingCart } from 'lucide-react';
+import { Check, Clock, Users, ShoppingCart, ArrowLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useCart } from '@/contexts/CartContext';
@@ -182,6 +182,7 @@ const productsDatabase: Record<string, Product> = {
 
 export default function ProductPage() {
   const params = useParams();
+  const router = useRouter();
   const slug = params.slug as string;
   const product = productsDatabase[slug as keyof typeof productsDatabase];
   const { addItem, isInCart } = useCart();
@@ -220,7 +221,16 @@ export default function ProductPage() {
       
       <main>
         {/* Hero Section */}
-        <section className="py-20 bg-gradient-to-br from-purple-50 to-blue-50">
+        <section className="pt-8 pb-20 bg-gradient-to-br from-purple-50 to-blue-50">
+          <div className="container mb-8">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors duration-300"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Go Back</span>
+            </button>
+          </div>
           <div className="container">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>

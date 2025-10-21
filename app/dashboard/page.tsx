@@ -5,14 +5,17 @@ import { motion } from 'framer-motion';
 import { Download } from 'lucide-react';
 import Link from 'next/link';
 import DashboardNav from '@/components/DashboardNav';
-import Footer from '@/components/Footer';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showNewProjectForm, setShowNewProjectForm] = useState(false);
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
+  const [projectDetailTab, setProjectDetailTab] = useState('files');
+  const [activeProjectChat, setActiveProjectChat] = useState<number | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [message, setMessage] = useState('');
   const [formData, setFormData] = useState({
     projectName: '',
     projectType: '',
@@ -23,29 +26,30 @@ export default function DashboardPage() {
   });
 
   // Mock user data - in production, this would come from auth/API
-  const userData = {
-    name: "John Doe",
-    email: "john@example.com",
-    plan: "Professional",
-    hoursRemaining: 8,
-    hoursTotal: 10,
-    nextBilling: "Nov 8, 2025",
-    projects: [
-      { 
-        id: 1, 
-        name: "Logo Redesign", 
-        status: "In Progress", 
-        type: "Logo Design",
-        createdDate: "Oct 1, 2025",
-        deadline: "Oct 15, 2025",
-        hoursUsed: 3,
-        designer: "Sarah Johnson",
-        lastUpdate: "2 hours ago",
-        files: [
-          { name: "logo-concept-v1.ai", size: "2.4 MB", date: "Oct 5" },
-          { name: "logo-concept-v2.ai", size: "2.1 MB", date: "Oct 7" }
-        ]
-      },
+  const [userProjects, setUserProjects] = useState([
+    { 
+      id: 1, 
+      name: "Logo Redesign", 
+      status: "In Progress", 
+      type: "Logo Design",
+      createdDate: "Oct 1, 2025",
+      deadline: "Oct 15, 2025",
+      hoursUsed: 3,
+      designer: "Sarah Johnson",
+      lastUpdate: "2 hours ago",
+      files: [
+        { name: "logo-concept-v1.ai", size: "2.4 MB", date: "Oct 5" },
+        { name: "logo-concept-v2.ai", size: "2.1 MB", date: "Oct 7" }
+      ],
+      messages: [
+        { id: 1, sender: 'designer', senderName: 'Sarah Johnson', content: 'Hi! 👋 I&apos;ve reviewed your project brief for the logo redesign. I have a few questions to get started.', timestamp: '10:30 AM', isRead: true },
+        { id: 2, sender: 'user', senderName: 'You', content: 'Sure! I&apos;m happy to provide more details. 😊', timestamp: '10:32 AM', isRead: true },
+        { id: 3, sender: 'designer', senderName: 'Sarah Johnson', content: 'What&apos;s the primary emotion you want the logo to convey? Modern and professional, or more playful and creative? 🎨', timestamp: '10:33 AM', isRead: true },
+        { id: 4, sender: 'user', senderName: 'You', content: 'I&apos;d like it to be modern and professional, but still approachable. We&apos;re a tech startup targeting small businesses. 💼', timestamp: '10:35 AM', isRead: true },
+        { id: 5, sender: 'designer', senderName: 'Sarah Johnson', content: 'Perfect! 🎯 I&apos;ll start working on some concepts. I should have initial designs ready for you by tomorrow afternoon.', timestamp: '10:37 AM', isRead: true },
+        { id: 6, sender: 'designer', senderName: 'Sarah Johnson', content: 'I&apos;ve uploaded the latest concepts to your project folder. Let me know what you think! 🚀', timestamp: '2:15 PM', isRead: false },
+      ]
+    },
       { 
         id: 2, 
         name: "Brand Guidelines", 
@@ -59,6 +63,11 @@ export default function DashboardPage() {
         files: [
           { name: "brand-guidelines.pdf", size: "5.2 MB", date: "Oct 6" },
           { name: "color-palette.pdf", size: "1.1 MB", date: "Oct 6" }
+        ],
+        messages: [
+          { id: 1, sender: 'designer', senderName: 'Mike Chen', content: 'Starting work on your brand guidelines. 📚 I&apos;ll need some info about your brand values.', timestamp: '9:00 AM', isRead: true },
+          { id: 2, sender: 'user', senderName: 'You', content: 'Our core values are innovation, trust, and simplicity. ✨', timestamp: '9:30 AM', isRead: true },
+          { id: 3, sender: 'designer', senderName: 'Mike Chen', content: 'Great! 👍 I&apos;ll revise the color palette to reflect those values.', timestamp: '11:00 AM', isRead: true },
         ]
       },
       { 
@@ -75,9 +84,22 @@ export default function DashboardPage() {
           { name: "instagram-templates.psd", size: "12.3 MB", date: "Sep 29" },
           { name: "facebook-templates.psd", size: "8.7 MB", date: "Sep 29" },
           { name: "final-assets.zip", size: "45.2 MB", date: "Sep 30" }
+        ],
+        messages: [
+          { id: 1, sender: 'designer', senderName: 'Sarah Johnson', content: 'Project completed! 🎉 All templates are uploaded.', timestamp: 'Sep 30, 2:00 PM', isRead: true },
+          { id: 2, sender: 'user', senderName: 'You', content: 'These look amazing! Thank you! 🙌', timestamp: 'Sep 30, 3:15 PM', isRead: true },
         ]
       },
-    ],
+    ]);
+
+  const userData = {
+    name: "Ricardo Beaumont",
+    email: "ricardo@beaumont.com",
+    plan: "Professional",
+    hoursRemaining: 8,
+    hoursTotal: 10,
+    nextBilling: "Nov 8, 2025",
+    projects: userProjects,
     recentMessages: 3
   };
 
@@ -160,9 +182,36 @@ export default function DashboardPage() {
     }
   };
 
+  const handleSendMessage = (projectId: number) => {
+    if (!message.trim()) return;
+
+    const newMessage = {
+      id: Date.now(),
+      sender: 'user' as const,
+      senderName: 'You',
+      content: message,
+      timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      isRead: true
+    };
+
+    setUserProjects(prevProjects => 
+      prevProjects.map(p => 
+        p.id === projectId 
+          ? { ...p, messages: [...p.messages, newMessage] }
+          : p
+      )
+    );
+
+    setMessage('');
+  };
+
   return (
     <>
-      <DashboardNav userName={userData.name} notifications={userData.recentMessages} />
+      <DashboardNav 
+        userName={userData.name} 
+        notifications={userData.recentMessages}
+        onTabChange={setActiveTab}
+      />
       
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="flex">
@@ -288,22 +337,22 @@ export default function DashboardPage() {
           <div className="flex-1 p-8 lg:p-12">
             {/* Welcome Header */}
             <motion.div 
-              className="mb-10"
+              className="mb-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
+                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
                     Welcome back, {userData.name}! 👋
                   </h1>
-                  <p className="text-lg text-gray-600">Here&apos;s what&apos;s happening with your projects today.</p>
+                  <p className="text-base text-gray-600">Here&apos;s what&apos;s happening with your projects today.</p>
                 </div>
                 <div className="hidden xl:flex items-center gap-3">
-                  <div className="px-6 py-3 bg-white rounded-2xl border border-gray-200 shadow-sm">
-                    <p className="text-xs text-gray-500 mb-1">Member since</p>
-                    <p className="font-bold text-purple-600">{subscription.startDate.split(',')[0]}</p>
+                  <div className="px-5 py-2.5 bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <p className="text-xs text-gray-500 mb-0.5">Member since</p>
+                    <p className="text-sm font-bold text-purple-600">{subscription.startDate.split(',')[0]}</p>
                   </div>
                 </div>
               </div>
@@ -527,18 +576,18 @@ export default function DashboardPage() {
                 className="space-y-6"
               >
                 {/* Projects Header */}
-                <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-6 border border-purple-100">
+                <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-5 border border-purple-100">
                   <div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Your Projects</h2>
-                    <p className="text-gray-600">Brief new projects and manage existing ones</p>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">Your Projects</h2>
+                    <p className="text-sm text-gray-600">Brief new projects and manage existing ones</p>
                   </div>
                   <motion.button 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowNewProjectForm(true)}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold px-8 py-4 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 text-sm"
                   >
-                    <span className="text-2xl">+</span>
+                    <span className="text-lg">+</span>
                     New Project
                   </motion.button>
                 </div>
@@ -557,9 +606,9 @@ export default function DashboardPage() {
                       <div className="p-8">
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-bold text-gray-900">{project.name}</h3>
-                              <span className={`px-4 py-1.5 rounded-xl text-xs font-bold shadow-sm ${
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <h3 className="text-lg font-bold text-gray-900">{project.name}</h3>
+                              <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-sm ${
                                 project.status === 'Completed' 
                                   ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
                                   : project.status === 'In Progress'
@@ -569,101 +618,521 @@ export default function DashboardPage() {
                                 {project.status}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-600">{project.type}</p>
+                            <p className="text-sm text-gray-500">{project.type}</p>
                           </div>
-                          <button 
-                            onClick={() => setSelectedProject(selectedProject === project.id ? null : project.id)}
-                            className="text-purple-600 hover:text-purple-700 font-semibold text-sm"
+                          <Link 
+                            href={`/dashboard/projects/${project.id}`}
+                            className="text-purple-600 hover:text-purple-700 font-semibold text-xs flex items-center gap-1 group"
                           >
-                            {selectedProject === project.id ? 'Hide Details ↑' : 'View Details →'}
-                          </button>
+                            View Details 
+                            <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+                          </Link>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        {/* Progress Bar for In Progress Projects */}
+                        {project.status === 'In Progress' && (
+                          <div className="mb-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-gray-600">Project Progress</span>
+                              <span className="text-xs font-bold text-purple-600">65%</span>
+                            </div>
+                            <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: '65%' }}
+                                transition={{ duration: 1.5, ease: "easeOut" }}
+                                className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-600 via-blue-500 to-purple-600 rounded-full"
+                                style={{
+                                  backgroundSize: '200% 100%',
+                                }}
+                              >
+                                <motion.div
+                                  animate={{ backgroundPosition: ['0% 0%', '100% 0%'] }}
+                                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                  className="w-full h-full"
+                                  style={{
+                                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                                    backgroundSize: '50% 100%',
+                                  }}
+                                />
+                              </motion.div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                           <div>
-                            <p className="text-xs text-gray-500 mb-1">Created</p>
+                            <p className="text-xs text-gray-500 mb-0.5">Created</p>
                             <p className="text-sm font-semibold text-gray-900">{project.createdDate}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500 mb-1">Deadline</p>
+                            <p className="text-xs text-gray-500 mb-0.5">Deadline</p>
                             <p className="text-sm font-semibold text-gray-900">{project.deadline}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500 mb-1">Hours Used</p>
+                            <p className="text-xs text-gray-500 mb-0.5">Hours Used</p>
                             <p className="text-sm font-semibold text-gray-900">{project.hoursUsed}h</p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500 mb-1">Designer</p>
+                            <p className="text-xs text-gray-500 mb-0.5">Designer</p>
                             <p className="text-sm font-semibold text-gray-900">{project.designer}</p>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-6 border-t border-gray-100 mt-6">
-                          <p className="text-sm text-gray-500 font-medium">Last update: {project.lastUpdate}</p>
-                          <div className="flex gap-3">
-                            <motion.button 
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setActiveTab('chat')}
-                              className="px-5 py-2.5 bg-gradient-to-r from-gray-100 to-gray-50 hover:from-gray-200 hover:to-gray-100 text-gray-700 font-semibold rounded-xl transition-all duration-300 text-sm shadow-sm hover:shadow-md flex items-center gap-2"
-                            >
-                              <span className="text-base">💬</span> Chat
-                            </motion.button>
-                            <motion.button 
+                        <div className="flex items-center justify-between pt-5 border-t border-gray-100 mt-5">
+                          <p className="text-xs text-gray-500 font-medium">Last update: {project.lastUpdate}</p>
+                          <div className="flex gap-2">
+                            <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => setSelectedProject(selectedProject === project.id ? null : project.id)}
-                              className="px-5 py-2.5 bg-gradient-to-r from-purple-100 to-blue-100 hover:from-purple-200 hover:to-blue-200 text-purple-700 font-semibold rounded-xl transition-all duration-300 text-sm shadow-sm hover:shadow-md flex items-center gap-2"
+                              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-300 text-xs shadow-md hover:shadow-lg flex items-center gap-1.5"
                             >
-                              <span className="text-base">📁</span> Files ({project.files.length})
+                              <span className="text-sm">📂</span> {selectedProject === project.id ? 'Close' : 'Open Project'}
                             </motion.button>
                           </div>
                         </div>
 
-                        {/* Expandable Files Section */}
-                        {selectedProject === project.id && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="mt-6 pt-6 border-t border-gray-200"
-                          >
-                            <h4 className="font-bold text-gray-900 mb-4 text-lg">Project Files</h4>
-                            <div className="space-y-3">
-                              {project.files.map((file, fileIndex) => (
-                                <motion.div 
-                                  key={fileIndex}
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ duration: 0.3, delay: fileIndex * 0.1 }}
-                                  className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-2xl hover:shadow-md transition-all duration-300 border border-gray-100 group"
-                                >
-                                  <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
-                                      📄
-                                    </div>
-                                    <div>
-                                      <p className="font-semibold text-gray-900 text-sm group-hover:text-purple-600 transition-colors">{file.name}</p>
-                                      <p className="text-xs text-gray-500">{file.size} • Uploaded {file.date}</p>
-                                    </div>
-                                  </div>
-                                  <motion.button 
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold text-sm rounded-xl transition-all duration-300 shadow-md hover:shadow-lg"
-                                  >
-                                    <Download className="w-4 h-4" />
-                                    Download
-                                  </motion.button>
-                                </motion.div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
                       </div>
                     </motion.div>
                   ))}
                 </div>
+              </motion.div>
+            )}
+
+            {/* Full-Screen Project Details Modal */}
+            {selectedProject && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto"
+                onClick={() => setSelectedProject(null)}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, y: 20 }}
+                  animate={{ scale: 1, y: 0 }}
+                  exit={{ scale: 0.95, y: 20 }}
+                  transition={{ type: "spring", damping: 25 }}
+                  className="bg-white rounded-3xl max-w-7xl w-full my-8 shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {(() => {
+                    const project = userData.projects.find(p => p.id === selectedProject);
+                    if (!project) return null;
+
+                    return (
+                      <>
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-8 text-white rounded-t-3xl">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2.5 mb-2">
+                                <h2 className="text-2xl font-bold">{project.name}</h2>
+                                <span className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                                  project.status === 'Completed' 
+                                    ? 'bg-green-500 text-white'
+                                    : project.status === 'In Progress'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-yellow-500 text-white'
+                                }`}>
+                                  {project.status}
+                                </span>
+                              </div>
+                              <p className="text-base opacity-90">{project.type}</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              {/* Mark as Complete Button for Review Status */}
+                              {project.status === 'Review' && (
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setShowCompleteModal(true)}
+                                  className="bg-white text-purple-600 font-bold px-6 py-3 rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg flex items-center gap-2"
+                                >
+                                  <span className="text-lg">✓</span>
+                                  Approve & Complete
+                                </motion.button>
+                              )}
+                              
+                              {/* Download All Button for Completed Projects */}
+                              {project.status === 'Completed' && (
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  className="bg-white text-purple-600 font-bold px-6 py-3 rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg flex items-center gap-2"
+                                >
+                                  <Download className="w-5 h-5" />
+                                  Download All Files
+                                </motion.button>
+                              )}
+
+                              <button
+                                onClick={() => setSelectedProject(null)}
+                                className="text-white hover:bg-white/20 rounded-xl p-2 transition-colors"
+                              >
+                                <span className="text-3xl">×</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Progress Bar / Status Banner */}
+                          {project.status === 'In Progress' && (
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-semibold">Project Progress</span>
+                                <span className="text-sm font-bold">65%</span>
+                              </div>
+                              <div className="relative h-2 bg-white/20 rounded-full overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: '65%' }}
+                                  transition={{ duration: 1.5, ease: "easeOut" }}
+                                  className="absolute top-0 left-0 h-full bg-white rounded-full"
+                                >
+                                  <motion.div
+                                    animate={{ backgroundPosition: ['0% 0%', '200% 0%'] }}
+                                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                    className="w-full h-full opacity-50"
+                                    style={{
+                                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)',
+                                      backgroundSize: '50% 100%',
+                                    }}
+                                  />
+                                </motion.div>
+                              </div>
+                            </div>
+                          )}
+
+                          {project.status === 'Review' && (
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-semibold">Ready for Review</span>
+                                <span className="text-sm font-bold">100%</span>
+                              </div>
+                              <div className="relative h-2 bg-white/20 rounded-full overflow-hidden">
+                                <div className="absolute top-0 left-0 h-full w-full bg-white rounded-full"></div>
+                              </div>
+                              <p className="text-xs mt-2 opacity-90">All deliverables are ready for your approval</p>
+                            </div>
+                          )}
+
+                          {project.status === 'Completed' && (
+                            <div className="bg-green-500/20 backdrop-blur-sm rounded-xl p-4 border border-green-400/30">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-green-500 text-xl">
+                                  ✓
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold">Project Completed</p>
+                                  <p className="text-xs opacity-90">All files are available for download</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-8">
+                          <div className="grid lg:grid-cols-3 gap-6">
+                            {/* Left Column - Tabbed Content */}
+                            <div className="lg:col-span-2 space-y-6">
+                              {/* Project Info Cards */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="bg-gray-50 rounded-xl p-4">
+                                  <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">Created</p>
+                                  <p className="text-sm font-bold text-gray-900">{project.createdDate}</p>
+                                </div>
+                                <div className="bg-gray-50 rounded-xl p-4">
+                                  <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">Deadline</p>
+                                  <p className="text-sm font-bold text-gray-900">{project.deadline}</p>
+                                </div>
+                                <div className="bg-purple-50 rounded-xl p-4">
+                                  <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">Hours</p>
+                                  <p className="text-sm font-bold text-purple-600">{project.hoursUsed}h</p>
+                                </div>
+                                <div className="bg-gray-50 rounded-xl p-4">
+                                  <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">Designer</p>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                      {project.designer.split(' ').map(n => n[0]).join('')}
+                                    </div>
+                                    <p className="text-xs font-bold text-gray-900">{project.designer.split(' ')[0]}</p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Tabs Navigation */}
+                              <div className="bg-gray-100 rounded-xl p-1 flex gap-1">
+                                <button
+                                  onClick={() => setProjectDetailTab('files')}
+                                  className={`flex-1 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                                    projectDetailTab === 'files'
+                                      ? 'bg-white text-purple-600 shadow-md'
+                                      : 'text-gray-600 hover:text-gray-900'
+                                  }`}
+                                >
+                                  📁 Files
+                                </button>
+                                <button
+                                  onClick={() => setProjectDetailTab('timeline')}
+                                  className={`flex-1 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                                    projectDetailTab === 'timeline'
+                                      ? 'bg-white text-purple-600 shadow-md'
+                                      : 'text-gray-600 hover:text-gray-900'
+                                  }`}
+                                >
+                                  📊 Timeline
+                                </button>
+                                <button
+                                  onClick={() => setProjectDetailTab('activity')}
+                                  className={`flex-1 px-4 py-3 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                                    projectDetailTab === 'activity'
+                                      ? 'bg-white text-purple-600 shadow-md'
+                                      : 'text-gray-600 hover:text-gray-900'
+                                  }`}
+                                >
+                                  ⚡ Activity
+                                </button>
+                              </div>
+
+                              {/* Tab Content */}
+                              <div className="min-h-[400px]">
+                                {/* Files Tab */}
+                                {projectDetailTab === 'files' && (
+                                  <motion.div
+                                    key="files"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.3 }}
+                                  >
+                                    <h3 className="text-xl font-bold text-gray-900 mb-4">Project Files ({project.files.length})</h3>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                      {project.files.map((file, fileIndex) => (
+                                        <motion.div 
+                                          key={fileIndex}
+                                          initial={{ opacity: 0, scale: 0.95 }}
+                                          animate={{ opacity: 1, scale: 1 }}
+                                          transition={{ duration: 0.3, delay: fileIndex * 0.1 }}
+                                          className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl hover:shadow-lg transition-all duration-300 border border-gray-200 group"
+                                        >
+                                          <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                                              📄
+                                            </div>
+                                            <div>
+                                              <p className="font-semibold text-gray-900 text-sm group-hover:text-purple-600 transition-colors">{file.name}</p>
+                                              <p className="text-xs text-gray-500">{file.size} • {file.date}</p>
+                                            </div>
+                                          </div>
+                                          <motion.button 
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.9 }}
+                                            className="p-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-colors shadow-md"
+                                          >
+                                            <Download className="w-4 h-4" />
+                                          </motion.button>
+                                        </motion.div>
+                                      ))}
+                                    </div>
+                                  </motion.div>
+                                )}
+
+                                {/* Timeline Tab */}
+                                {projectDetailTab === 'timeline' && (
+                                  <motion.div
+                                    key="timeline"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.3 }}
+                                  >
+                                    <h3 className="text-xl font-bold text-gray-900 mb-4">Project Timeline</h3>
+                                    <div className="space-y-4">
+                                      <motion.div 
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.1 }}
+                                        className="flex items-start gap-4 p-5 bg-green-50 border-2 border-green-200 rounded-2xl"
+                                      >
+                                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">✓</div>
+                                        <div className="flex-1">
+                                          <p className="font-bold text-gray-900 text-lg mb-1">Project Briefed</p>
+                                          <p className="text-sm text-gray-600 mb-2">Initial requirements submitted and reviewed by {project.designer}</p>
+                                          <p className="text-xs text-gray-500">{project.createdDate}</p>
+                                        </div>
+                                      </motion.div>
+                                      <motion.div 
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.2 }}
+                                        className="flex items-start gap-4 p-5 bg-blue-50 border-2 border-blue-200 rounded-2xl"
+                                      >
+                                        <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl shadow-lg">🎨</div>
+                                        <div className="flex-1">
+                                          <p className="font-bold text-gray-900 text-lg mb-1">Design In Progress</p>
+                                          <p className="text-sm text-gray-600 mb-2">{project.designer} is actively working on your project</p>
+                                          <p className="text-xs text-gray-500">Last update: {project.lastUpdate}</p>
+                                        </div>
+                                      </motion.div>
+                                      <motion.div 
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                        className="flex items-start gap-4 p-5 bg-gray-50 border-2 border-gray-200 rounded-2xl opacity-60"
+                                      >
+                                        <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-2xl shadow-lg">📦</div>
+                                        <div className="flex-1">
+                                          <p className="font-bold text-gray-900 text-lg mb-1">Delivery</p>
+                                          <p className="text-sm text-gray-600 mb-2">Final files and deliverables will be ready</p>
+                                          <p className="text-xs text-gray-500">Expected: {project.deadline}</p>
+                                        </div>
+                                      </motion.div>
+                                    </div>
+                                  </motion.div>
+                                )}
+
+                                {/* Activity Tab */}
+                                {projectDetailTab === 'activity' && (
+                                  <motion.div
+                                    key="activity"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.3 }}
+                                  >
+                                    <h3 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h3>
+                                    <div className="space-y-3">
+                                      <motion.div 
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.1 }}
+                                        className="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow"
+                                      >
+                                        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center text-xl">📄</div>
+                                        <div className="flex-1">
+                                          <p className="font-semibold text-gray-900">Files uploaded</p>
+                                          <p className="text-sm text-gray-600">{project.designer} added {project.files.length} new files</p>
+                                          <p className="text-xs text-gray-400 mt-1">{project.lastUpdate}</p>
+                                        </div>
+                                      </motion.div>
+                                      <motion.div 
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.2 }}
+                                        className="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow"
+                                      >
+                                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-xl">💬</div>
+                                        <div className="flex-1">
+                                          <p className="font-semibold text-gray-900">New message</p>
+                                          <p className="text-sm text-gray-600">{project.designer} sent you a message</p>
+                                          <p className="text-xs text-gray-400 mt-1">2 hours ago</p>
+                                        </div>
+                                      </motion.div>
+                                      <motion.div 
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                        className="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow"
+                                      >
+                                        <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-xl">🎨</div>
+                                        <div className="flex-1">
+                                          <p className="font-semibold text-gray-900">Design phase started</p>
+                                          <p className="text-sm text-gray-600">Project moved to active development</p>
+                                          <p className="text-xs text-gray-400 mt-1">3 days ago</p>
+                                        </div>
+                                      </motion.div>
+                                      <motion.div 
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.4 }}
+                                        className="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow"
+                                      >
+                                        <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center text-xl">📋</div>
+                                        <div className="flex-1">
+                                          <p className="font-semibold text-gray-900">Project created</p>
+                                          <p className="text-sm text-gray-600">You submitted the project brief</p>
+                                          <p className="text-xs text-gray-400 mt-1">{project.createdDate}</p>
+                                        </div>
+                                      </motion.div>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Right Column - Chat */}
+                            <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-200 p-6 h-fit sticky top-0">
+                              <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
+                                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center text-white text-sm font-bold">
+                                  {project.designer.split(' ').map(n => n[0]).join('')}
+                                </div>
+                                <div>
+                                  <h3 className="font-bold text-gray-900">{project.designer}</h3>
+                                  <p className="text-xs text-gray-500">Senior Designer</p>
+                                </div>
+                              </div>
+
+                              {/* Messages */}
+                              <div className="space-y-3 mb-4 max-h-96 overflow-y-auto pr-2">
+                                {project.messages.map((msg) => (
+                                  <div
+                                    key={msg.id}
+                                    className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                                  >
+                                    <div className={`max-w-[85%]`}>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xs font-semibold text-gray-500">{msg.senderName}</span>
+                                        <span className="text-xs text-gray-400">{msg.timestamp}</span>
+                                      </div>
+                                      <div className={`p-3 rounded-2xl ${
+                                        msg.sender === 'user'
+                                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
+                                          : 'bg-white border border-gray-200 text-gray-900'
+                                      }`}>
+                                        <p className="text-sm leading-relaxed">{msg.content}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Message Input */}
+                              <div className="flex gap-2 pt-4 border-t border-gray-200">
+                                <input
+                                  type="text"
+                                  value={message}
+                                  onChange={(e) => setMessage(e.target.value)}
+                                  placeholder="Type a message... (Try adding emojis! 😊)"
+                                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      handleSendMessage(project.id);
+                                    }
+                                  }}
+                                />
+                                <motion.button 
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => handleSendMessage(project.id)}
+                                  disabled={!message.trim()}
+                                  className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${
+                                    message.trim()
+                                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-md hover:shadow-lg'
+                                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                  }`}
+                                >
+                                  Send 🚀
+                                </motion.button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </motion.div>
               </motion.div>
             )}
 
@@ -673,17 +1142,273 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
+                className="space-y-6"
               >
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
-                  <div className="text-6xl mb-4">💬</div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Chat with Designer</h2>
-                  <p className="text-gray-600 mb-6">Real-time communication with your creative team</p>
-                  <a 
-                    href="/dashboard/chat"
-                    className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300"
-                  >
-                    Open Chat →
-                  </a>
+                {/* Chat Header */}
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-6 border border-purple-100">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Messages</h2>
+                  <p className="text-gray-600">All your project conversations in one place</p>
+                </div>
+
+                {/* Chat Conversations List */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-1 gap-4">
+                  {userData.projects.map((project, index) => {
+                    const unreadCount = project.messages.filter(m => !m.isRead).length;
+                    const lastMessage = project.messages[project.messages.length - 1];
+                    
+                    return (
+                      <motion.div
+                        key={project.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                        onClick={() => {
+                          setActiveTab('projects');
+                          setActiveProjectChat(project.id);
+                        }}
+                        className="bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 p-6 cursor-pointer group"
+                      >
+                        <div className="flex items-start gap-4">
+                          {/* Designer Avatar */}
+                          <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center text-white text-lg font-bold shadow-md group-hover:scale-110 transition-transform duration-300">
+                            {project.designer.split(' ').map(n => n[0]).join('')}
+                          </div>
+
+                          {/* Chat Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors">{project.name}</h3>
+                                <p className="text-sm text-gray-500">{project.designer}</p>
+                              </div>
+                              {unreadCount > 0 && (
+                                <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-md animate-pulse">
+                                  {unreadCount}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 truncate mb-2">
+                              <span className="font-semibold">{lastMessage.senderName}:</span> {lastMessage.content}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-400">{lastMessage.timestamp}</span>
+                              <span className={`px-3 py-1 rounded-xl text-xs font-bold ${
+                                project.status === 'Completed' 
+                                  ? 'bg-green-100 text-green-700'
+                                  : project.status === 'In Progress'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                {project.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Profile Tab */}
+            {activeTab === 'profile' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-6"
+              >
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-6 border border-purple-100">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h2>
+                  <p className="text-gray-600">Manage your personal information and avatar</p>
+                </div>
+
+                <div className="grid lg:grid-cols-3 gap-6">
+                  {/* Profile Form */}
+                  <div className="lg:col-span-2 space-y-6">
+                    {/* Personal Information */}
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                      <h3 className="text-xl font-bold text-gray-900 mb-6">Personal Information</h3>
+                      <form className="space-y-4">
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
+                            <input
+                              type="text"
+                              defaultValue="Ricardo"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
+                            <input
+                              type="text"
+                              defaultValue="Beaumont"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                          <input
+                            type="email"
+                            defaultValue="ricardo@beaumont.com"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
+                          <input
+                            type="tel"
+                            placeholder="+1 (555) 000-0000"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Company</label>
+                          <input
+                            type="text"
+                            placeholder="Your company name"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Bio</label>
+                          <textarea
+                            rows={4}
+                            placeholder="Tell us a bit about yourself..."
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                          />
+                        </div>
+                        <div className="flex gap-3 pt-4">
+                          <button
+                            type="submit"
+                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300"
+                          >
+                            Save Changes
+                          </button>
+                          <button
+                            type="button"
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-6 py-3 rounded-xl transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+
+                    {/* Password Change */}
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                      <h3 className="text-xl font-bold text-gray-900 mb-6">Change Password</h3>
+                      <form className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
+                          <input
+                            type="password"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
+                          <input
+                            type="password"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label>
+                          <input
+                            type="password"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+                        >
+                          Update Password
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+
+                  {/* Avatar Section */}
+                  <div className="space-y-6">
+                    {/* Current Avatar */}
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                      <h3 className="text-xl font-bold text-gray-900 mb-6">Profile Picture</h3>
+                      <div className="flex flex-col items-center">
+                        <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-blue-600 rounded-3xl flex items-center justify-center text-white text-4xl font-bold shadow-xl mb-4">
+                          {userData.name.charAt(0)}
+                        </div>
+                        <p className="text-sm text-gray-600 mb-4">Current Avatar</p>
+                        
+                        {/* Upload Button */}
+                        <label className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-4 py-3 rounded-xl transition-all duration-300 text-center cursor-pointer">
+                          <input type="file" accept="image/*" className="hidden" />
+                          Upload Photo
+                        </label>
+                        <p className="text-xs text-gray-500 mt-2">JPG, PNG or GIF (Max 5MB)</p>
+                      </div>
+                    </div>
+
+                    {/* Predefined Avatars */}
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                      <h3 className="font-bold text-gray-900 mb-4">Choose Avatar</h3>
+                      <div className="grid grid-cols-3 gap-3">
+                        {['🎨', '🚀', '⚡', '🎯', '💎', '🔥', '🌟', '💡', '🎭'].map((emoji, index) => (
+                          <button
+                            key={index}
+                            className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 hover:from-purple-100 hover:to-blue-100 rounded-xl flex items-center justify-center text-3xl transition-all duration-300 hover:scale-110 border-2 border-transparent hover:border-purple-400"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Avatar Colors */}
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                      <h3 className="font-bold text-gray-900 mb-4">Background Color</h3>
+                      <div className="grid grid-cols-4 gap-3">
+                        {[
+                          'from-purple-600 to-blue-600',
+                          'from-pink-500 to-red-500',
+                          'from-green-500 to-emerald-500',
+                          'from-orange-500 to-yellow-500',
+                          'from-blue-500 to-cyan-500',
+                          'from-indigo-500 to-purple-500',
+                          'from-red-500 to-pink-500',
+                          'from-gray-700 to-gray-900'
+                        ].map((gradient, index) => (
+                          <button
+                            key={index}
+                            className={`aspect-square bg-gradient-to-br ${gradient} rounded-xl hover:scale-110 transition-all duration-300 border-2 border-transparent hover:border-gray-400`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Account Status */}
+                    <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border border-purple-100 p-6">
+                      <h3 className="font-bold text-gray-900 mb-4">Account Status</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Email Verified</span>
+                          <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">✓ Verified</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Member Since</span>
+                          <span className="text-sm font-semibold text-gray-900">Oct 2024</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Plan</span>
+                          <span className="text-sm font-semibold text-purple-600">Professional</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1069,9 +1794,71 @@ export default function DashboardPage() {
               </motion.div>
             </div>
           )}
+
+          {/* Complete Project Modal */}
+          {showCompleteModal && (
+            <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={() => setShowCompleteModal(false)}>
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-white rounded-3xl max-w-lg w-full p-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-2xl">
+                    ✓
+                  </div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-4">Approve Project Completion?</h2>
+                  <p className="text-gray-600 mb-8 leading-relaxed">
+                    By approving this project, you confirm that you&apos;re satisfied with the deliverables. 
+                    The project will be marked as complete and archived.
+                  </p>
+                  
+                  <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-6 mb-6 border border-purple-100">
+                    <h3 className="font-bold text-gray-900 mb-3">What happens next:</h3>
+                    <ul className="space-y-2 text-left text-sm text-gray-700">
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-600">✓</span>
+                        All files will remain available for download
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-600">✓</span>
+                        Project moved to completed archive
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-600">✓</span>
+                        Designer will be notified
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-600">✓</span>
+                        You can still access chat history
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => setShowCompleteModal(false)}
+                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-4 rounded-xl transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={() => {
+                        console.log('Project marked as complete');
+                        setShowCompleteModal(false);
+                        setSelectedProject(null);
+                      }}
+                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl"
+                    >
+                      ✓ Approve & Complete
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
       </main>
-      
-      <Footer />
     </>
   );
 }
