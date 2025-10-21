@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Download } from 'lucide-react';
 import Link from 'next/link';
@@ -24,9 +24,23 @@ export default function DashboardPage() {
     budget: '',
     files: [] as File[]
   });
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Mock user data - in production, this would come from auth/API
-  const [userProjects, setUserProjects] = useState([
+  // Load projects from localStorage on mount
+  const getInitialProjects = () => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('bransol_user_projects');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error('Error loading projects from localStorage:', e);
+        }
+      }
+    }
+    // Default projects if nothing in localStorage
+    return [
     { 
       id: 1, 
       name: "Logo Redesign", 
@@ -90,7 +104,18 @@ export default function DashboardPage() {
           { id: 2, sender: 'user', senderName: 'You', content: 'These look amazing! Thank you! 🙌', timestamp: 'Sep 30, 3:15 PM', isRead: true },
         ]
       },
-    ]);
+    ];
+  };
+
+  // Mock user data - in production, this would come from auth/API
+  const [userProjects, setUserProjects] = useState(getInitialProjects);
+
+  // Save projects to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bransol_user_projects', JSON.stringify(userProjects));
+    }
+  }, [userProjects]);
 
   const userData = {
     name: "Ricardo Beaumont",
@@ -204,7 +229,21 @@ export default function DashboardPage() {
     );
 
     setMessage('');
+    
+    // Scroll to bottom after message is sent
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
+
+  // Auto-scroll when selected project changes
+  useEffect(() => {
+    if (selectedProject) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+    }
+  }, [selectedProject]);
 
   return (
     <>
@@ -1097,6 +1136,7 @@ export default function DashboardPage() {
                                     </div>
                                   </div>
                                 ))}
+                                <div ref={messagesEndRef} />
                               </div>
 
                               {/* Message Input */}
