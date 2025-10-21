@@ -6,38 +6,50 @@ export async function middleware(request: NextRequest) {
     request,
   })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
+  // Skip Supabase middleware if environment variables are not set
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.warn('Supabase environment variables not configured - skipping auth middleware')
+    return supabaseResponse
+  }
+
+  try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+            supabaseResponse = NextResponse.next({
+              request,
+            })
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
+            )
+          },
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
+      }
+    )
 
-  // Refresh session if expired
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    // Refresh session if expired
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  // Optional: Redirect to login if accessing protected routes
-  // if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-  //   return NextResponse.redirect(new URL('/login', request.url))
-  // }
+    // Optional: Redirect to login if accessing protected routes
+    // if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
+    //   return NextResponse.redirect(new URL('/login', request.url))
+    // }
 
-  return supabaseResponse
+    return supabaseResponse
+  } catch (error) {
+    // If there's any error in middleware, log it and continue
+    console.error('Middleware error:', error)
+    return supabaseResponse
+  }
 }
 
 export const config = {
