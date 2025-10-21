@@ -160,19 +160,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user) return;
+    if (!user) {
+      throw new Error('User must be authenticated to update profile');
+    }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
 
-      setProfile((prev) => (prev ? { ...prev, ...updates } : null));
+      // Update local state with the returned data from database
+      if (data) {
+        setProfile(data);
+      }
+      
+      return { success: true, data };
     } catch (error) {
       console.error('Error updating profile:', error);
+      throw error;
     }
   };
 

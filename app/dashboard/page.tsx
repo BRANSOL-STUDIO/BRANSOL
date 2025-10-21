@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [message, setMessage] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
   const [formData, setFormData] = useState({
     projectName: '',
     projectType: '',
@@ -1322,20 +1323,32 @@ export default function DashboardPage() {
                       <h3 className="text-xl font-bold text-gray-900 mb-6">Personal Information</h3>
                       <form onSubmit={async (e) => {
                         e.preventDefault();
-                        const formData = new FormData(e.currentTarget);
-                        const fullName = `${formData.get('firstName')} ${formData.get('lastName')}`;
-                        const updates = {
-                          full_name: fullName,
-                          phone: formData.get('phone') as string,
-                          company: formData.get('company') as string,
-                          bio: formData.get('bio') as string,
-                        };
-                        if (user && updateProfile) {
-                          // Update in Supabase
-                          await updateProfile(updates);
-                          alert('Profile updated successfully!');
-                        } else {
-                          alert('Login required to save profile changes');
+                        setSavingProfile(true);
+                        
+                        try {
+                          const formData = new FormData(e.currentTarget);
+                          const firstName = formData.get('firstName') as string;
+                          const lastName = formData.get('lastName') as string;
+                          const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+                          
+                          const updates = {
+                            full_name: fullName,
+                            phone: (formData.get('phone') as string) || null,
+                            company: (formData.get('company') as string) || null,
+                            bio: (formData.get('bio') as string) || null,
+                          };
+                          
+                          if (user && updateProfile) {
+                            await updateProfile(updates);
+                            alert('✅ Profile updated successfully! Your changes have been saved.');
+                          } else {
+                            alert('⚠️ Please log in to save profile changes');
+                          }
+                        } catch (error) {
+                          console.error('Error updating profile:', error);
+                          alert('❌ Failed to update profile. Please try again.');
+                        } finally {
+                          setSavingProfile(false);
                         }
                       }} className="space-y-4">
                         <div className="grid md:grid-cols-2 gap-4">
@@ -1402,16 +1415,17 @@ export default function DashboardPage() {
                         <div className="flex gap-3 pt-4">
                           <button
                             type="submit"
-                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300"
+                            disabled={savingProfile}
+                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Save Changes
+                            {savingProfile ? 'Saving...' : 'Save Changes'}
                           </button>
                           <button
                             type="button"
-                            onClick={() => (document.activeElement as HTMLElement)?.blur()}
+                            onClick={() => window.location.reload()}
                             className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-6 py-3 rounded-xl transition-colors"
                           >
-                            Cancel
+                            Reset
                           </button>
                         </div>
                       </form>
