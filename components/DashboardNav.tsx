@@ -6,6 +6,7 @@ import { Bell, Settings, LogOut, Search, Menu, X, User, CreditCard, HelpCircle }
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardNavProps {
   userName: string;
@@ -15,6 +16,7 @@ interface DashboardNavProps {
 
 export default function DashboardNav({ userName, notifications = 0, onTabChange }: DashboardNavProps) {
   const router = useRouter();
+  const { signOut } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -50,10 +52,13 @@ export default function DashboardNav({ userName, notifications = 0, onTabChange 
     };
   }, []);
 
-  const handleLogout = () => {
-    // In a real app, this would call your logout API
-    console.log('Logging out...');
-    router.push('/');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   return (
