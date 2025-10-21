@@ -97,6 +97,7 @@ export default function DashboardPage() {
     email: "ricardo@beaumont.com",
     plan: "Professional",
     hoursRemaining: 8,
+    hoursUsed: 2,
     hoursTotal: 10,
     nextBilling: "Nov 8, 2025",
     projects: userProjects,

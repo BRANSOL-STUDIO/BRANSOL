@@ -86,6 +86,20 @@ export default function ProjectDetailPage() {
 
   const project = projects.find(p => p.id === projectId);
 
+  // Move useEffect before conditional return
+  useEffect(() => {
+    if (project) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [project]);
+
+  const handleSendMessage = () => {
+    if (message.trim()) {
+      console.log('Sending message:', message);
+      setMessage('');
+    }
+  };
+
   if (!project) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -98,17 +112,6 @@ export default function ProjectDetailPage() {
       </div>
     );
   }
-
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      console.log('Sending message:', message);
-      setMessage('');
-    }
-  };
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [project.messages]);
 
   return (
     <>
