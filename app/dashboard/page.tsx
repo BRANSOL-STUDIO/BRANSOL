@@ -5,8 +5,13 @@ import { motion } from 'framer-motion';
 import { Download } from 'lucide-react';
 import Link from 'next/link';
 import DashboardNav from '@/components/DashboardNav';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProjectChat } from '@/hooks/useProjectChat';
 
 export default function DashboardPage() {
+  const { user, profile } = useAuth();
+  const { projects: supabaseProjects, sendMessage: sendSupabaseMessage, createProject: createSupabaseProject, loading: projectsLoading } = useProjectChat(user?.id);
+  
   const [activeTab, setActiveTab] = useState('overview');
   const [showNewProjectForm, setShowNewProjectForm] = useState(false);
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
@@ -107,26 +112,30 @@ export default function DashboardPage() {
     ];
   };
 
-  // Mock user data - in production, this would come from auth/API
-  const [userProjects, setUserProjects] = useState(getInitialProjects);
+  // Mock user data for non-authenticated users
+  const [localProjects, setLocalProjects] = useState(getInitialProjects);
 
-  // Save projects to localStorage whenever they change
+  // Save local projects to localStorage whenever they change (only if not using Supabase)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('bransol_user_projects', JSON.stringify(userProjects));
+    if (!user && typeof window !== 'undefined') {
+      localStorage.setItem('bransol_user_projects', JSON.stringify(localProjects));
     }
-  }, [userProjects]);
+  }, [localProjects, user]);
+
+  // Use Supabase projects if user is authenticated, otherwise use local projects
+  const userProjects = user ? supabaseProjects : localProjects;
+  const setUserProjects = user ? () => {} : setLocalProjects; // Supabase updates handled by hook
 
   const userData = {
-    name: "Ricardo Beaumont",
-    email: "ricardo@beaumont.com",
-    plan: "Professional",
-    hoursRemaining: 8,
-    hoursUsed: 2,
-    hoursTotal: 10,
+    name: profile?.full_name || "Ricardo Beaumont",
+    email: profile?.email || "ricardo@beaumont.com",
+    plan: profile?.plan || "Professional",
+    hoursRemaining: profile?.hours_remaining || 8,
+    hoursUsed: profile ? (profile.hours_total - profile.hours_remaining) : 2,
+    hoursTotal: profile?.hours_total || 10,
     nextBilling: "Nov 8, 2025",
     projects: userProjects,
-    recentMessages: 3
+    recentMessages: userProjects.reduce((count, p) => count + (p.messages?.filter((m: any) => !m.isRead && !m.is_read).length || 0), 0)
   };
 
   const projectTypes = [
@@ -188,9 +197,22 @@ export default function DashboardPage() {
     { date: 'Aug 8, 2025', amount: 2500, status: 'Paid', invoice: 'INV-2025-08' },
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Project Brief Submitted:', formData);
+    
+    // If user is authenticated, create project in Supabase
+    if (user && createSupabaseProject) {
+      await createSupabaseProject({
+        name: formData.projectName,
+        type: formData.projectType,
+        description: formData.description,
+        deadline: formData.deadline,
+      });
+    } else {
+      // Mock creation for non-authenticated users
+      console.log('Project Brief Submitted:', formData);
+    }
+    
     setShowNewProjectForm(false);
     setFormData({
       projectName: '',
@@ -208,9 +230,24 @@ export default function DashboardPage() {
     }
   };
 
-  const handleSendMessage = (projectId: number) => {
+  const handleSendMessage = async (projectId: number | string) => {
     if (!message.trim()) return;
 
+    // If user is authenticated, use Supabase
+    if (user && sendSupabaseMessage) {
+      await sendSupabaseMessage(
+        String(projectId),
+        message,
+        userData.name
+      );
+      setMessage('');
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      return;
+    }
+
+    // Otherwise use localStorage (mock data)
     const newMessage = {
       id: Date.now(),
       sender: 'user' as const,
@@ -220,7 +257,7 @@ export default function DashboardPage() {
       isRead: true
     };
 
-    setUserProjects(prevProjects => 
+    setLocalProjects(prevProjects => 
       prevProjects.map(p => 
         p.id === projectId 
           ? { ...p, messages: [...p.messages, newMessage] }
