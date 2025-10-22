@@ -823,12 +823,14 @@ export default function DashboardPage() {
                           <div className="mb-4">
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-xs font-semibold text-gray-600">Project Progress</span>
-                              <span className="text-xs font-bold text-purple-600">65%</span>
+                              <span className="text-xs font-bold text-purple-600">
+                                {Math.min(100, Math.max(0, (project.hours_used / 10) * 100))}%
+                              </span>
                             </div>
                             <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
                               <motion.div
                                 initial={{ width: 0 }}
-                                animate={{ width: '65%' }}
+                                animate={{ width: `${Math.min(100, Math.max(0, (project.hours_used / 10) * 100))}%` }}
                                 transition={{ duration: 1.5, ease: "easeOut" }}
                                 className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-600 via-blue-500 to-purple-600 rounded-full"
                                 style={{
@@ -982,12 +984,14 @@ export default function DashboardPage() {
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                               <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm font-semibold">Project Progress</span>
-                                <span className="text-sm font-bold">65%</span>
+                                <span className="text-sm font-bold">
+                                  {Math.min(100, Math.max(0, (project.hours_used / 10) * 100))}%
+                                </span>
                               </div>
                               <div className="relative h-2 bg-white/20 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
-                                  animate={{ width: '65%' }}
+                                  animate={{ width: `${Math.min(100, Math.max(0, (project.hours_used / 10) * 100))}%` }}
                                   transition={{ duration: 1.5, ease: "easeOut" }}
                                   className="absolute top-0 left-0 h-full bg-white rounded-full"
                                 >
