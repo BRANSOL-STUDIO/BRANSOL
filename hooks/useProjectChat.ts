@@ -150,7 +150,13 @@ export function useProjectChat(userId?: string) {
     description?: string;
     deadline?: string;
   }) => {
-    if (!userId) return null;
+    if (!userId) {
+      console.error('No userId provided for project creation');
+      return null;
+    }
+
+    console.log('Creating project with userId:', userId);
+    console.log('Project data:', projectData);
 
     try {
       const { data, error } = await supabase
@@ -181,6 +187,18 @@ export function useProjectChat(userId?: string) {
       return data;
     } catch (err) {
       console.error('Error creating project:', err);
+      console.error('Project data being inserted:', {
+        user_id: userId,
+        ...projectData,
+        status: 'In Progress',
+        hours_used: 0,
+      });
+      console.error('Error details:', {
+        message: err?.message,
+        details: err?.details,
+        hint: err?.hint,
+        code: err?.code
+      });
       return null;
     }
   };
