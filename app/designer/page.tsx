@@ -89,6 +89,7 @@ export default function DesignerPortal() {
       }
       
       console.log('📊 Projects data:', data);
+      console.log('📊 Project user_ids:', data?.map(p => ({ id: p.id, name: p.name, user_id: p.user_id })));
       setProjects(data || []);
     } catch (err) {
       console.error('❌ Error fetching projects:', err);
