@@ -282,22 +282,28 @@ export default function DesignerPortal() {
       const clientProfiles = allProfiles?.filter(p => p.role === 'client' || !p.role);
       console.log('👥 Client profiles found:', clientProfiles);
       
-      // If no client profiles, let's see what we have
+      // If no client profiles, let's check if the project has any clues about the real client
       if (!clientProfiles || clientProfiles.length === 0) {
-        console.log('🔍 No client profiles found. Available profiles:', allProfiles);
+        console.log('🔍 No client profiles found. Checking project data for client info...');
         
-        // For now, let's create a client profile from the designer profile
-        if (allProfiles && allProfiles.length > 0) {
-          const designerProfile = allProfiles[0];
-          console.log('🔄 Creating client profile from designer:', designerProfile);
+        // Check if there are any messages from the client that might have their name
+        const { data: messages, error: messagesError } = await supabase
+          .from('messages')
+          .select('sender_name, sender_type')
+          .eq('project_id', selectedProject?.id)
+          .eq('sender_type', 'user');
           
-          // Create a client profile
+        if (!messagesError && messages && messages.length > 0) {
+          const clientName = messages[0].sender_name;
+          console.log('🔍 Found client name from messages:', clientName);
+          
+          // Create a client profile with the real client name
           const { data: newClient, error: createError } = await supabase
             .from('profiles')
             .insert({
-              id: projectUserId, // Use the project's user_id
-              email: designerProfile.email,
-              full_name: designerProfile.full_name || 'Test Client',
+              id: projectUserId,
+              email: null, // We don't have the email
+              full_name: clientName,
               role: 'client'
             })
             .select()
@@ -305,11 +311,11 @@ export default function DesignerPortal() {
             
           if (createError) {
             console.error('❌ Error creating client profile:', createError);
-            // If creation fails, use the designer profile as fallback
+            // Use fallback with real client name
             const fallbackProfile = {
               id: projectUserId,
-              full_name: designerProfile.full_name || 'Test Client',
-              email: designerProfile.email
+              full_name: clientName,
+              email: null
             };
             
             setClientProfiles(prev => ({
@@ -319,21 +325,7 @@ export default function DesignerPortal() {
             
             return fallbackProfile;
           } else {
-            console.log('✅ Created client profile:', newClient);
-            
-            // Update the project to use the correct user_id
-            const { error: updateError } = await supabase
-              .from('projects')
-              .update({ user_id: newClient.id })
-              .eq('id', selectedProject?.id);
-              
-            if (updateError) {
-              console.error('❌ Error updating project user_id:', updateError);
-            } else {
-              console.log('✅ Updated project user_id to:', newClient.id);
-              fetchProjects();
-            }
-            
+            console.log('✅ Created client profile with real name:', newClient);
             setClientProfiles(prev => ({
               ...prev,
               [projectUserId]: newClient
@@ -341,6 +333,21 @@ export default function DesignerPortal() {
             
             return newClient;
           }
+        } else {
+          console.log('⚠️ No client messages found. Cannot determine real client name.');
+          // Don't create a fake profile - just use a generic fallback
+          const fallbackProfile = {
+            id: projectUserId,
+            full_name: 'Unknown Client',
+            email: null
+          };
+          
+          setClientProfiles(prev => ({
+            ...prev,
+            [projectUserId]: fallbackProfile
+          }));
+          
+          return fallbackProfile;
         }
       }
       
