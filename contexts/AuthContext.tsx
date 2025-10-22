@@ -19,6 +19,7 @@ interface Profile {
   hours_total: number;
   hours_reset_date: string;
   billing_day: number;
+  role: 'client' | 'designer' | 'admin';
   created_at?: string;
 }
 
