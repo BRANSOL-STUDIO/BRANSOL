@@ -364,7 +364,7 @@ export default function DashboardPage() {
     <>
       <DashboardNav 
         userName={profile?.full_name || userData.name} 
-        notifications={userData.recentMessages}
+        notifications={totalUnreadMessages}
         onTabChange={setActiveTab}
       />
       
@@ -459,7 +459,7 @@ export default function DashboardPage() {
                 >
                   <span className="text-xl">💬</span>
                   <span>Chat</span>
-                  {userData.recentMessages > 0 && (
+                  {userData.recentMessages > 0 && totalUnreadMessages > 0 && (
                     <span 
                       key={`notification-${notificationKey}-${userData.recentMessages}`}
                       className="ml-auto bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse"
@@ -626,7 +626,7 @@ export default function DashboardPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                           </svg>
                         </div>
-                        {userData.recentMessages > 0 && (
+                        {userData.recentMessages > 0 && totalUnreadMessages > 0 && (
                           <span 
                             key={`overview-notification-${notificationKey}-${userData.recentMessages}`}
                             className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse"
