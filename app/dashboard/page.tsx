@@ -448,6 +448,20 @@ export default function DashboardPage() {
                   <span className="text-xl">⚡</span>
                   <span>Subscription</span>
                 </button>
+                <button
+                  onClick={() => setActiveTab('archive')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                    activeTab === 'archive'
+                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <span className="text-xl">📁</span>
+                  <span>Archive</span>
+                  <span className="ml-auto bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">
+                    {supabaseProjects.filter(p => p.status === 'Archived').length}
+                  </span>
+                </button>
               </div>
 
               <div className="mt-8 pt-6 border-t border-gray-200">
@@ -1359,6 +1373,143 @@ export default function DashboardPage() {
                       </motion.div>
                     );
                   })}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Archive Tab */}
+            {activeTab === 'archive' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <div className="space-y-6">
+                  {/* Archive Header */}
+                  <div className="bg-gradient-to-br from-gray-600 to-gray-700 rounded-2xl p-8 text-white shadow-xl">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                        <span className="text-3xl">📁</span>
+                      </div>
+                      <div>
+                        <h2 className="text-3xl font-bold mb-2">Project Archive</h2>
+                        <p className="text-gray-200">Your completed and archived projects</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-white/10 rounded-xl p-4">
+                        <div className="text-2xl font-bold">{supabaseProjects.filter(p => p.status === 'Archived').length}</div>
+                        <div className="text-sm text-gray-200">Archived Projects</div>
+                      </div>
+                      <div className="bg-white/10 rounded-xl p-4">
+                        <div className="text-2xl font-bold">{supabaseProjects.filter(p => p.status === 'Completed').length}</div>
+                        <div className="text-sm text-gray-200">Completed Projects</div>
+                      </div>
+                      <div className="bg-white/10 rounded-xl p-4">
+                        <div className="text-2xl font-bold">{supabaseProjects.filter(p => p.status === 'Completed' || p.status === 'Archived').length}</div>
+                        <div className="text-sm text-gray-200">Total Finished</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Archive Projects */}
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {supabaseProjects.filter(p => p.status === 'Completed' || p.status === 'Archived').map((project, index) => (
+                      <motion.div
+                        key={project.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                        className="bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                      >
+                        {/* Project Header */}
+                        <div className="p-6 border-b border-gray-100">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h3 className="text-lg font-bold text-gray-900 mb-1">{project.name}</h3>
+                              <p className="text-sm text-gray-600">{project.type}</p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              project.status === 'Completed'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {project.status}
+                            </span>
+                          </div>
+                          
+                          {project.completion_notes && (
+                            <div className="bg-gray-50 rounded-xl p-3 mb-3">
+                              <p className="text-sm text-gray-700 italic">"{project.completion_notes}"</p>
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span>Designer: {project.designer_name || 'Unassigned'}</span>
+                            <span>•</span>
+                            <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                            {project.completed_at && (
+                              <>
+                                <span>•</span>
+                                <span>Completed: {new Date(project.completed_at).toLocaleDateString()}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Project Actions */}
+                        <div className="p-6 bg-gray-50">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setSelectedProject(parseInt(project.id));
+                                setActiveTab('projects');
+                              }}
+                              className="flex-1 bg-white text-gray-700 hover:bg-gray-100 font-semibold px-4 py-2 rounded-xl transition-colors border border-gray-200"
+                            >
+                              👁️ View Details
+                            </button>
+                            {project.status === 'Completed' && (
+                              <button
+                                onClick={() => setShowArchiveModal(true)}
+                                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors"
+                              >
+                                📁 Archive
+                              </button>
+                            )}
+                          </div>
+                          
+                          {/* Project Stats */}
+                          <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+                            <div className="bg-white rounded-xl p-3">
+                              <div className="text-lg font-bold text-gray-900">{project.messages?.length || 0}</div>
+                              <div className="text-xs text-gray-500">Messages</div>
+                            </div>
+                            <div className="bg-white rounded-xl p-3">
+                              <div className="text-lg font-bold text-gray-900">{project.files?.length || 0}</div>
+                              <div className="text-xs text-gray-500">Files</div>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                    
+                    {supabaseProjects.filter(p => p.status === 'Completed' || p.status === 'Archived').length === 0 && (
+                      <div className="col-span-full bg-white rounded-2xl border border-gray-200 p-12 text-center">
+                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <span className="text-3xl text-gray-400">📁</span>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">No Archived Projects</h3>
+                        <p className="text-gray-600 mb-6">Completed projects will appear here once you archive them.</p>
+                        <button
+                          onClick={() => setActiveTab('projects')}
+                          className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300"
+                        >
+                          View Active Projects
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             )}

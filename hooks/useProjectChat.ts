@@ -217,7 +217,9 @@ export function useProjectChat(userId?: string) {
 
   const completeProject = async (projectId: string, completionNotes?: string) => {
     try {
-      const { error } = await supabase
+      console.log('🔵 Starting project completion:', { projectId, completionNotes });
+      
+      const { data, error } = await supabase
         .from('projects')
         .update({ 
           status: 'Completed',
@@ -225,9 +227,21 @@ export function useProjectChat(userId?: string) {
           completion_notes: completionNotes,
           updated_at: new Date().toISOString()
         })
-        .eq('id', projectId);
+        .eq('id', projectId)
+        .select();
 
-      if (error) throw error;
+      console.log('🔵 Supabase response:', { data, error });
+
+      if (error) {
+        console.error('🔴 Supabase error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          fullError: error
+        });
+        throw error;
+      }
 
       // Update local state
       setProjects(prev => 
@@ -243,9 +257,12 @@ export function useProjectChat(userId?: string) {
         )
       );
 
+      console.log('✅ Project completed successfully');
       return true;
     } catch (err) {
-      console.error('Error completing project:', err);
+      console.error('🔴 Error completing project:', err);
+      console.error('🔴 Error type:', typeof err);
+      console.error('🔴 Error keys:', err ? Object.keys(err) : 'null');
       return false;
     }
   };
