@@ -68,6 +68,21 @@ export default function DesignerPortal() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
+  // Calculate project progress based on workflow stages
+  const getProjectProgress = (project: Project) => {
+    const workflowStages = {
+      'Briefing': 10,      // Initial briefing and requirements gathering
+      'In Progress': 50,   // Active design work
+      'Review': 75,        // Client review phase
+      'Revision': 85,      // Making revisions based on feedback
+      'Completed': 100,   // Project completed
+      'On Hold': 25,      // Project paused
+      'Archived': 100     // Archived projects are considered complete
+    };
+    
+    return workflowStages[project.status as keyof typeof workflowStages] || 0;
+  };
+
   // Check if user is a designer
   useEffect(() => {
     if (profile && profile.role !== 'designer' && profile.role !== 'admin') {
@@ -258,8 +273,10 @@ export default function DesignerPortal() {
   // Dashboard Statistics
   const dashboardStats = {
     totalProjects: projects.length,
+    briefingProjects: projects.filter(p => p.status === 'Briefing').length,
     activeProjects: projects.filter(p => p.status === 'In Progress').length,
     reviewProjects: projects.filter(p => p.status === 'Review').length,
+    revisionProjects: projects.filter(p => p.status === 'Revision').length,
     completedProjects: projects.filter(p => p.status === 'Completed').length,
     totalClients: Object.keys(clientProfiles).length,
     unreadMessages: messages.filter(m => !m.is_read && m.sender_type === 'user').length,
@@ -291,10 +308,14 @@ export default function DesignerPortal() {
   // Get status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case 'Briefing':
+        return <MessageSquare className="w-4 h-4 text-purple-600" />;
       case 'In Progress':
         return <Clock className="w-4 h-4 text-blue-600" />;
       case 'Review':
         return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+      case 'Revision':
+        return <AlertCircle className="w-4 h-4 text-orange-600" />;
       case 'Completed':
         return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'On Hold':
@@ -397,12 +418,20 @@ export default function DesignerPortal() {
                   <div className="text-xs text-white/70 uppercase tracking-wide">Projects</div>
                 </div>
                 <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-200">{dashboardStats.briefingProjects}</div>
+                  <div className="text-xs text-white/70 uppercase tracking-wide">Briefing</div>
+                </div>
+                <div className="text-center">
                   <div className="text-2xl font-bold text-blue-200">{dashboardStats.activeProjects}</div>
                   <div className="text-xs text-white/70 uppercase tracking-wide">Active</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-yellow-200">{dashboardStats.reviewProjects}</div>
                   <div className="text-xs text-white/70 uppercase tracking-wide">Review</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-200">{dashboardStats.revisionProjects}</div>
+                  <div className="text-xs text-white/70 uppercase tracking-wide">Revision</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-white/90">{dashboardStats.totalClients}</div>
@@ -474,6 +503,16 @@ export default function DesignerPortal() {
               <div className="hidden md:flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-600">Quick Filter:</span>
                 <button
+                  onClick={() => setStatusFilter('Briefing')}
+                  className={`px-4 py-2 text-sm rounded-xl font-medium transition-all duration-200 ${
+                    statusFilter === 'Briefing'
+                      ? 'bg-purple-100 text-purple-700 border-2 border-purple-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-purple-50 hover:text-purple-600'
+                  }`}
+                >
+                  🟣 Briefing Only
+                </button>
+                <button
                   onClick={() => setStatusFilter('In Progress')}
                   className={`px-4 py-2 text-sm rounded-xl font-medium transition-all duration-200 ${
                     statusFilter === 'In Progress'
@@ -492,6 +531,16 @@ export default function DesignerPortal() {
                   }`}
                 >
                   🟡 Review Only
+                </button>
+                <button
+                  onClick={() => setStatusFilter('Revision')}
+                  className={`px-4 py-2 text-sm rounded-xl font-medium transition-all duration-200 ${
+                    statusFilter === 'Revision'
+                      ? 'bg-orange-100 text-orange-700 border-2 border-orange-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-600'
+                  }`}
+                >
+                  🟠 Revision Only
                 </button>
                 <button
                   onClick={() => setStatusFilter('all')}
@@ -513,8 +562,10 @@ export default function DesignerPortal() {
                   className="px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
                 >
                   <option value="all">All Projects</option>
+                  <option value="Briefing">Briefing Only</option>
                   <option value="In Progress">Active Only</option>
                   <option value="Review">Review Only</option>
+                  <option value="Revision">Revision Only</option>
                 </select>
               </div>
             </div>
@@ -579,8 +630,10 @@ export default function DesignerPortal() {
                     className="px-4 py-3 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-200"
                   >
                     <option value="all">All Status</option>
+                    <option value="Briefing">Briefing</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Review">Review</option>
+                    <option value="Revision">Revision</option>
                     <option value="Completed">Completed</option>
                     <option value="On Hold">On Hold</option>
                     <option value="Archived">Archived</option>
@@ -665,10 +718,14 @@ export default function DesignerPortal() {
                               ? 'bg-white/20 text-white' 
                               : project.status === 'Completed'
                               ? 'bg-green-100 text-green-700'
+                              : project.status === 'Briefing'
+                              ? 'bg-purple-100 text-purple-700'
                               : project.status === 'In Progress'
                               ? 'bg-blue-100 text-blue-700'
                               : project.status === 'Review'
                               ? 'bg-yellow-100 text-yellow-700'
+                              : project.status === 'Revision'
+                              ? 'bg-orange-100 text-orange-700'
                               : project.status === 'Archived'
                               ? 'bg-gray-100 text-gray-700'
                               : 'bg-red-100 text-red-700'
@@ -731,8 +788,10 @@ export default function DesignerPortal() {
                       onChange={(e) => setNewStatus(e.target.value)}
                       className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     >
+                      <option value="Briefing">Briefing</option>
                       <option value="In Progress">In Progress</option>
                       <option value="Review">Review</option>
+                      <option value="Revision">Revision</option>
                       <option value="Completed">Completed</option>
                       <option value="On Hold">On Hold</option>
                       <option value="Archived">Archived</option>
@@ -996,10 +1055,14 @@ export default function DesignerPortal() {
                             <span className={`text-xs px-2 py-1 rounded-full font-medium ${
                               project.status === 'Completed'
                                 ? 'bg-green-100 text-green-700'
+                                : project.status === 'Briefing'
+                                ? 'bg-purple-100 text-purple-700'
                                 : project.status === 'In Progress'
                                 ? 'bg-blue-100 text-blue-700'
                                 : project.status === 'Review'
                                 ? 'bg-yellow-100 text-yellow-700'
+                                : project.status === 'Revision'
+                                ? 'bg-orange-100 text-orange-700'
                                 : 'bg-red-100 text-red-700'
                             }`}>
                               {project.status}
