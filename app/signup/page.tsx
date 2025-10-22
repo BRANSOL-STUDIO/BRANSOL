@@ -24,6 +24,10 @@ export default function SignupPage() {
     e.preventDefault();
     setError('');
 
+    console.log('🔵 Starting signup process...');
+    console.log('Email:', email);
+    console.log('Full Name:', fullName);
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -36,16 +40,25 @@ export default function SignupPage() {
 
     setLoading(true);
 
-    const { error: signUpError } = await signUp(email, password, fullName);
+    try {
+      console.log('🔵 Calling signUp function...');
+      const { error: signUpError } = await signUp(email, password, fullName);
 
-    if (signUpError) {
-      setError(signUpError.message);
+      if (signUpError) {
+        console.error('🔴 Signup error:', signUpError);
+        setError(signUpError.message || 'Failed to create account');
+        setLoading(false);
+      } else {
+        console.log('✅ Signup successful!');
+        setSuccess(true);
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2000);
+      }
+    } catch (err: any) {
+      console.error('🔴 Unexpected error during signup:', err);
+      setError(err.message || 'An unexpected error occurred');
       setLoading(false);
-    } else {
-      setSuccess(true);
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2000);
     }
   };
 

@@ -123,6 +123,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
+      console.log('🔵 AuthContext: Starting signUp for', email);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -133,11 +135,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       });
 
-      if (error) throw error;
+      console.log('🔵 Supabase auth.signUp response:', { data, error });
+
+      if (error) {
+        console.error('🔴 Auth signup error:', error);
+        throw error;
+      }
 
       // Create profile
       if (data.user) {
-        await supabase.from('profiles').insert([
+        console.log('🔵 Creating profile for user:', data.user.id);
+        
+        const { data: profileData, error: profileError } = await supabase.from('profiles').insert([
           {
             id: data.user.id,
             email: data.user.email,
@@ -146,11 +155,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             hours_remaining: 10,
             hours_total: 10,
           },
-        ]);
+        ]).select();
+
+        console.log('🔵 Profile creation response:', { profileData, profileError });
+
+        if (profileError) {
+          console.error('🔴 Profile creation error:', profileError);
+          // Don't fail signup if profile creation fails - profile will be auto-created on login
+        }
       }
 
+      console.log('✅ Signup completed successfully');
       return { error: null };
     } catch (error) {
+      console.error('🔴 SignUp catch error:', error);
       return { error: error as Error };
     }
   };
