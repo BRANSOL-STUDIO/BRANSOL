@@ -250,6 +250,13 @@ export default function DesignerPortal() {
     }
   };
 
+  // Load data on mount
+  useEffect(() => {
+    console.log('🔍 Designer portal mounted, user:', user?.id, 'profile:', profile?.role);
+    fetchProjects();
+    fetchClientProfiles();
+  }, [user, profile]);
+
   // Load messages when project is selected
   useEffect(() => {
     if (selectedProject) {
