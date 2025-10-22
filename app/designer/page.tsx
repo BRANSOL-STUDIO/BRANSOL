@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { motion } from 'framer-motion';
-import { Send, Users, LogOut, MessageSquare, FolderOpen, Clock, ArrowLeft, Search, Filter, Calendar, AlertCircle, CheckCircle, XCircle, MoreHorizontal, Download, FileText, Image, File, Eye, Trash2 } from 'lucide-react';
+import { Send, Users, LogOut, MessageSquare, FolderOpen, Clock, ArrowLeft, Search, Calendar, AlertCircle, CheckCircle, XCircle, Download, FileText, Image, File, Eye, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -58,80 +58,12 @@ export default function DesignerPortal() {
   const [newMessage, setNewMessage] = useState('');
   const [newStatus, setNewStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
-  const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [projectFiles, setProjectFiles] = useState<ProjectFile[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
   const designerName = profile?.full_name || 'Designer';
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
-
-  // Calculate project progress based on workflow stages
-  const getProjectProgress = (project: Project) => {
-    const workflowStages = {
-      'Briefing': 10,      // Initial briefing and requirements gathering
-      'In Progress': 50,   // Active design work
-      'Review': 75,        // Client review phase
-      'Revision': 85,      // Making revisions based on feedback
-      'Completed': 100,   // Project completed
-      'On Hold': 25,      // Project paused
-      'Archived': 100     // Archived projects are considered complete
-    };
-    
-    return workflowStages[project.status as keyof typeof workflowStages] || 0;
-  };
-
-  // Project Card Component
-  const ProjectCard = ({ project, client, onClick, isSelected }: { 
-    project: Project; 
-    client: ClientProfile | undefined; 
-    onClick: () => void; 
-    isSelected: boolean;
-  }) => {
-    const unreadCount = messages.filter(m => 
-      m.project_id === project.id && !m.is_read && m.sender_type === 'user'
-    ).length;
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        onClick={onClick}
-        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-          isSelected 
-            ? 'border-purple-500 bg-purple-50 shadow-lg' 
-            : 'border-gray-200 bg-white hover:border-gray-300'
-        }`}
-      >
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
-            {getStatusIcon(project.status)}
-            <h4 className="font-bold text-sm text-gray-900 truncate">{project.name}</h4>
-          </div>
-          {unreadCount > 0 && (
-            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-              {unreadCount}
-            </span>
-          )}
-        </div>
-        
-        <div className="space-y-2">
-          <p className="text-xs text-gray-600 truncate">{project.type}</p>
-          <p className="text-xs font-medium text-gray-700">{client?.full_name || 'Unknown Client'}</p>
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>{new Date(project.created_at).toLocaleDateString()}</span>
-            {project.deadline && (
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                <span>{new Date(project.deadline).toLocaleDateString()}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </motion.div>
-    );
-  };
 
   // Check if user is a designer
   useEffect(() => {
@@ -141,80 +73,55 @@ export default function DesignerPortal() {
     }
   }, [profile, router]);
 
-  useEffect(() => {
-    if (profile?.role === 'designer' || profile?.role === 'admin') {
-      fetchProjects();
-    }
-  }, [profile]);
-
-  useEffect(() => {
-    if (selectedProject) {
-      fetchMessages(selectedProject.id);
-      
-      // Subscribe to real-time messages
-      const channel = supabase
-        .channel(`designer-messages:${selectedProject.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter: `project_id=eq.${selectedProject.id}`,
-          },
-          (payload) => {
-            setMessages((current) => [...current, payload.new as Message]);
-            setTimeout(() => {
-              messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [selectedProject]);
-
+  // Fetch projects
   const fetchProjects = async () => {
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching projects:', error);
-      return;
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProjects(data || []);
+    } catch (err) {
+      console.error('Error fetching projects:', err);
     }
-
-    setProjects(data || []);
-
-    // Fetch client profiles
-    const userIds = [...new Set(data?.map(p => p.user_id) || [])];
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, full_name, email')
-      .in('id', userIds);
-
-    const profileMap: Record<string, ClientProfile> = {};
-    profiles?.forEach(p => {
-      profileMap[p.id] = p;
-    });
-    setClientProfiles(profileMap);
   };
 
+  // Fetch client profiles
+  const fetchClientProfiles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email');
+
+      if (error) throw error;
+      
+      const profilesMap = (data || []).reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {} as Record<string, ClientProfile>);
+      
+      setClientProfiles(profilesMap);
+    } catch (err) {
+      console.error('Error fetching client profiles:', err);
+    }
+  };
+
+  // Fetch messages for selected project
   const fetchMessages = async (projectId: string) => {
-    const { data } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: true });
-    
-    setMessages(data || []);
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+    }
   };
 
   // Fetch project files
@@ -227,67 +134,92 @@ export default function DesignerPortal() {
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching project files:', error);
-      } else {
-        setProjectFiles(data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching project files:', error);
+      if (error) throw error;
+      setProjectFiles(data || []);
+    } catch (err) {
+      console.error('Error fetching project files:', err);
     } finally {
       setLoadingFiles(false);
     }
   };
 
+  // Send message
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedProject || !user) return;
+    if (!selectedProject || !newMessage.trim()) return;
 
-    const { error } = await supabase.from('messages').insert([
-      {
-        project_id: selectedProject.id,
-        sender_id: user.id,
-        sender_type: 'designer',
-        sender_name: profile?.full_name || 'Designer',
-        content: newMessage,
-        is_read: false,
-      },
-    ]);
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([
+          {
+            project_id: selectedProject.id,
+            sender_id: user?.id,
+            sender_type: 'designer',
+            sender_name: designerName,
+            content: newMessage.trim(),
+            is_read: true,
+          },
+        ])
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error sending message:', error);
-      alert('Failed to send message');
-      return;
+      if (error) throw error;
+      
+      setMessages(prev => [...prev, data]);
+      setNewMessage('');
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) {
+      console.error('Error sending message:', err);
     }
-
-    setNewMessage('');
   };
 
+  // Update project status
   const updateProjectStatus = async (projectId: string, status: string) => {
-    const { error } = await supabase
-      .from('projects')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', projectId);
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', projectId);
 
-    if (error) {
-      console.error('Error updating status:', error);
-      return;
+      if (error) throw error;
+      
+      setProjects(prev => 
+        prev.map(project => 
+          project.id === projectId ? { ...project, status } : project
+        )
+      );
+      
+      if (selectedProject?.id === projectId) {
+        setSelectedProject(prev => prev ? { ...prev, status } : null);
+      }
+    } catch (err) {
+      console.error('Error updating project status:', err);
     }
-
-    setProjects(prev => prev.map(p => 
-      p.id === projectId ? { ...p, status } : p
-    ));
-
-    if (selectedProject?.id === projectId) {
-      setSelectedProject(prev => prev ? { ...prev, status } : null);
-    }
-
-    alert('✅ Project status updated!');
   };
 
+  // Handle logout
   const handleLogout = async () => {
-    await signOut();
-    router.push('/');
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
+
+  // Load data on mount
+  useEffect(() => {
+    fetchProjects();
+    fetchClientProfiles();
+  }, []);
+
+  // Load messages when project is selected
+  useEffect(() => {
+    if (selectedProject) {
+      fetchMessages(selectedProject.id);
+      fetchProjectFiles(selectedProject.id);
+      setNewStatus(selectedProject.status);
+    }
+  }, [selectedProject]);
 
   // Filter and sort projects
   const filteredAndSortedProjects = projects
@@ -298,9 +230,7 @@ export default function DesignerPortal() {
         (client?.full_name && client.full_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         project.type.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-      
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -313,8 +243,8 @@ export default function DesignerPortal() {
           const clientB = clientProfiles[b.user_id]?.full_name || '';
           return clientA.localeCompare(clientB);
         case 'status':
-          const statusOrder = { 'In Progress': 0, 'Review': 1, 'Completed': 2, 'On Hold': 3 };
-          return (statusOrder[a.status as keyof typeof statusOrder] || 4) - (statusOrder[b.status as keyof typeof statusOrder] || 4);
+          const statusOrder = { 'Briefing': 0, 'In Progress': 1, 'Review': 2, 'Revision': 3, 'Completed': 4, 'On Hold': 5, 'Archived': 6 };
+          return (statusOrder[a.status as keyof typeof statusOrder] || 7) - (statusOrder[b.status as keyof typeof statusOrder] || 7);
         default:
           return 0;
       }
@@ -331,29 +261,6 @@ export default function DesignerPortal() {
     totalClients: Object.keys(clientProfiles).length,
     unreadMessages: messages.filter(m => !m.is_read && m.sender_type === 'user').length,
   };
-
-  // Group projects by client
-  const projectsByClient = Object.keys(clientProfiles).reduce((acc, clientId) => {
-    const clientProjects = filteredAndSortedProjects.filter(p => p.user_id === clientId);
-    if (clientProjects.length > 0) {
-      acc[clientId] = {
-        client: clientProfiles[clientId],
-        projects: clientProjects,
-        totalProjects: clientProjects.length,
-        activeProjects: clientProjects.filter(p => p.status === 'In Progress').length,
-        unreadMessages: clientProjects.reduce((count, p) => {
-          return count + messages.filter(m => m.project_id === p.id && !m.is_read && m.sender_type === 'user').length;
-        }, 0),
-      };
-    }
-    return acc;
-  }, {} as Record<string, {
-    client: ClientProfile;
-    projects: Project[];
-    totalProjects: number;
-    activeProjects: number;
-    unreadMessages: number;
-  }>);
 
   // Get status icon
   const getStatusIcon = (status: string) => {
@@ -428,7 +335,6 @@ export default function DesignerPortal() {
         console.error('Error deleting file:', error);
         alert('Failed to delete file');
       } else {
-        // Refresh files list
         if (selectedProject) {
           fetchProjectFiles(selectedProject.id);
         }
@@ -439,6 +345,57 @@ export default function DesignerPortal() {
     }
   };
 
+  // Project Card Component
+  const ProjectCard = ({ project, client, onClick, isSelected }: { 
+    project: Project; 
+    client: ClientProfile | undefined; 
+    onClick: () => void; 
+    isSelected: boolean;
+  }) => {
+    const unreadCount = messages.filter(m => 
+      m.project_id === project.id && !m.is_read && m.sender_type === 'user'
+    ).length;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        onClick={onClick}
+        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${
+          isSelected 
+            ? 'border-purple-500 bg-purple-50 shadow-lg' 
+            : 'border-gray-200 bg-white hover:border-gray-300'
+        }`}
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            {getStatusIcon(project.status)}
+            <h4 className="font-bold text-sm text-gray-900 truncate">{project.name}</h4>
+          </div>
+          {unreadCount > 0 && (
+            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+              {unreadCount}
+            </span>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <p className="text-xs text-gray-600 truncate">{project.type}</p>
+          <p className="text-xs font-medium text-gray-700">{client?.full_name || 'Unknown Client'}</p>
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span>{new Date(project.created_at).toLocaleDateString()}</span>
+            {project.deadline && (
+              <div className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                <span>{new Date(project.deadline).toLocaleDateString()}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
   // Don't render if not a designer
   if (profile && profile.role !== 'designer' && profile.role !== 'admin') {
     return null;
@@ -446,7 +403,7 @@ export default function DesignerPortal() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Enhanced Header */}
+      {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white sticky top-0 z-50 shadow-xl">
         <div className="container">
           <div className="flex items-center justify-between h-20">
@@ -456,11 +413,11 @@ export default function DesignerPortal() {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold">Designer Portal</h1>
-                <p className="text-sm text-white/70">Manage client projects & communications</p>
+                <p className="text-sm text-white/70">Project Management Board</p>
               </div>
             </div>
             
-            {/* Enhanced Dashboard Stats */}
+            {/* Dashboard Stats */}
             <div className="hidden lg:flex items-center gap-8">
               <div className="flex items-center gap-6">
                 <div className="text-center">
@@ -517,139 +474,222 @@ export default function DesignerPortal() {
         </div>
       </div>
 
-            
-            {/* Enhanced Quick Actions */}
-            <div className="flex items-center gap-3">
-              <div className="hidden md:flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-600">Quick Filter:</span>
-                <button
-                  onClick={() => setStatusFilter('Briefing')}
-                  className={`px-4 py-2 text-sm rounded-xl font-medium transition-all duration-200 ${
-                    statusFilter === 'Briefing'
-                      ? 'bg-purple-100 text-purple-700 border-2 border-purple-200'
-                      : 'bg-gray-100 text-gray-600 hover:bg-purple-50 hover:text-purple-600'
-                  }`}
-                >
-                  🟣 Briefing Only
-                </button>
-                <button
-                  onClick={() => setStatusFilter('In Progress')}
-                  className={`px-4 py-2 text-sm rounded-xl font-medium transition-all duration-200 ${
-                    statusFilter === 'In Progress'
-                      ? 'bg-blue-100 text-blue-700 border-2 border-blue-200'
-                      : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
-                  }`}
-                >
-                  🔵 Active Only
-                </button>
-                <button
-                  onClick={() => setStatusFilter('Review')}
-                  className={`px-4 py-2 text-sm rounded-xl font-medium transition-all duration-200 ${
-                    statusFilter === 'Review'
-                      ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-200'
-                      : 'bg-gray-100 text-gray-600 hover:bg-yellow-50 hover:text-yellow-600'
-                  }`}
-                >
-                  🟡 Review Only
-                </button>
-                <button
-                  onClick={() => setStatusFilter('Revision')}
-                  className={`px-4 py-2 text-sm rounded-xl font-medium transition-all duration-200 ${
-                    statusFilter === 'Revision'
-                      ? 'bg-orange-100 text-orange-700 border-2 border-orange-200'
-                      : 'bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-600'
-                  }`}
-                >
-                  🟠 Revision Only
-                </button>
-                <button
-                  onClick={() => setStatusFilter('all')}
-                  className={`px-4 py-2 text-sm rounded-xl font-medium transition-all duration-200 ${
-                    statusFilter === 'all'
-                      ? 'bg-gray-200 text-gray-800 border-2 border-gray-300'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  ⚪ All Projects
-                </button>
-              </div>
-              
-              {/* Mobile Quick Actions */}
-              <div className="md:hidden">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
-                >
-                  <option value="all">All Projects</option>
-                  <option value="Briefing">Briefing Only</option>
-                  <option value="In Progress">Active Only</option>
-                  <option value="Review">Review Only</option>
-                  <option value="Revision">Revision Only</option>
-                </select>
-              </div>
+      {/* Search and Filter Bar */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="container py-6">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search projects, clients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-200"
+              />
             </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-200"
+            >
+              <option value="recent">Recent</option>
+              <option value="name">Name</option>
+              <option value="client">Client</option>
+              <option value="status">Status</option>
+            </select>
           </div>
         </div>
       </div>
 
       {/* Kanban Board */}
       <div className="container py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Enhanced Projects List */}
-            <div className="lg:col-span-1 order-2 lg:order-1">
-              <div className="bg-white rounded-3xl border border-gray-200 shadow-xl p-6 lg:sticky lg:top-32 lg:max-h-[calc(100vh-8rem)] overflow-hidden flex flex-col">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center">
-                  <Users className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-bold text-gray-900">
-                    {selectedClient ? `${clientProfiles[selectedClient]?.full_name || 'Client'} Projects` : 'Client Projects'}
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {selectedClient ? 'Filtered by client' : 'All active projects'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 px-3 py-1 rounded-full text-sm font-bold">
-                    {selectedClient 
-                      ? filteredAndSortedProjects.filter(p => p.user_id === selectedClient).length
-                      : filteredAndSortedProjects.length
-                    }
-                  </span>
-                  {selectedClient && (
-                    <button
-                      onClick={() => setSelectedClient(null)}
-                      className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-700 transition-all duration-200"
-                      title="Clear client filter"
-                    >
-                      ✕
-                    </button>
-                  )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          {/* Briefing Column */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 text-white">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-lg">Briefing</h3>
+                <span className="bg-white/20 px-2 py-1 rounded-full text-sm font-bold">
+                  {filteredAndSortedProjects.filter(p => p.status === 'Briefing').length}
+                </span>
+              </div>
+              <p className="text-purple-100 text-sm">Requirements gathering</p>
+            </div>
+            <div className="p-4 space-y-3 min-h-[400px]">
+              {filteredAndSortedProjects.filter(p => p.status === 'Briefing').map((project) => (
+                <ProjectCard 
+                  key={project.id} 
+                  project={project} 
+                  client={clientProfiles[project.user_id]}
+                  onClick={() => {
+                    setSelectedProject(project);
+                    setNewStatus(project.status);
+                    fetchProjectFiles(project.id);
+                  }}
+                  isSelected={selectedProject?.id === project.id}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* In Progress Column */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 text-white">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-lg">In Progress</h3>
+                <span className="bg-white/20 px-2 py-1 rounded-full text-sm font-bold">
+                  {filteredAndSortedProjects.filter(p => p.status === 'In Progress').length}
+                </span>
+              </div>
+              <p className="text-blue-100 text-sm">Active design work</p>
+            </div>
+            <div className="p-4 space-y-3 min-h-[400px]">
+              {filteredAndSortedProjects.filter(p => p.status === 'In Progress').map((project) => (
+                <ProjectCard 
+                  key={project.id} 
+                  project={project} 
+                  client={clientProfiles[project.user_id]}
+                  onClick={() => {
+                    setSelectedProject(project);
+                    setNewStatus(project.status);
+                    fetchProjectFiles(project.id);
+                  }}
+                  isSelected={selectedProject?.id === project.id}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Review Column */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-4 text-white">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-lg">Review</h3>
+                <span className="bg-white/20 px-2 py-1 rounded-full text-sm font-bold">
+                  {filteredAndSortedProjects.filter(p => p.status === 'Review').length}
+                </span>
+              </div>
+              <p className="text-yellow-100 text-sm">Client review phase</p>
+            </div>
+            <div className="p-4 space-y-3 min-h-[400px]">
+              {filteredAndSortedProjects.filter(p => p.status === 'Review').map((project) => (
+                <ProjectCard 
+                  key={project.id} 
+                  project={project} 
+                  client={clientProfiles[project.user_id]}
+                  onClick={() => {
+                    setSelectedProject(project);
+                    setNewStatus(project.status);
+                    fetchProjectFiles(project.id);
+                  }}
+                  isSelected={selectedProject?.id === project.id}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Revision Column */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4 text-white">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-lg">Revision</h3>
+                <span className="bg-white/20 px-2 py-1 rounded-full text-sm font-bold">
+                  {filteredAndSortedProjects.filter(p => p.status === 'Revision').length}
+                </span>
+              </div>
+              <p className="text-orange-100 text-sm">Making revisions</p>
+            </div>
+            <div className="p-4 space-y-3 min-h-[400px]">
+              {filteredAndSortedProjects.filter(p => p.status === 'Revision').map((project) => (
+                <ProjectCard 
+                  key={project.id} 
+                  project={project} 
+                  client={clientProfiles[project.user_id]}
+                  onClick={() => {
+                    setSelectedProject(project);
+                    setNewStatus(project.status);
+                    fetchProjectFiles(project.id);
+                  }}
+                  isSelected={selectedProject?.id === project.id}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Completed Column */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 text-white">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-lg">Completed</h3>
+                <span className="bg-white/20 px-2 py-1 rounded-full text-sm font-bold">
+                  {filteredAndSortedProjects.filter(p => p.status === 'Completed').length}
+                </span>
+              </div>
+              <p className="text-green-100 text-sm">Project finished</p>
+            </div>
+            <div className="p-4 space-y-3 min-h-[400px]">
+              {filteredAndSortedProjects.filter(p => p.status === 'Completed').map((project) => (
+                <ProjectCard 
+                  key={project.id} 
+                  project={project} 
+                  client={clientProfiles[project.user_id]}
+                  onClick={() => {
+                    setSelectedProject(project);
+                    setNewStatus(project.status);
+                    fetchProjectFiles(project.id);
+                  }}
+                  isSelected={selectedProject?.id === project.id}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Project Detail Sidebar */}
+        {selectedProject && (
+          <div className="fixed inset-y-0 right-0 w-96 bg-white shadow-2xl border-l border-gray-200 z-50 overflow-y-auto">
+            <div className="p-6">
+              {/* Close Button */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Project Details</h2>
+                <button
+                  onClick={() => setSelectedProject(null)}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <span className="text-2xl">×</span>
+                </button>
+              </div>
+
+              {/* Project Info */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{selectedProject.name}</h3>
+                <p className="text-gray-600 mb-3">{selectedProject.description}</p>
+                <div className="space-y-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Client:</span>
+                    <span>{clientProfiles[selectedProject.user_id]?.full_name || 'Unknown'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Type:</span>
+                    <span>{selectedProject.type}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Created:</span>
+                    <span>{new Date(selectedProject.created_at).toLocaleDateString()}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Enhanced Search and Filter Controls */}
-              <div className="space-y-4 mb-6">
-                <div className="relative">
-                  <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search projects, clients..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-200"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
+              {/* Status Update */}
+              <div className="mb-6 p-4 bg-gray-50 rounded-xl">
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">Update Status:</label>
+                <div className="flex gap-2">
                   <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-4 py-3 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-200"
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
-                    <option value="all">All Status</option>
                     <option value="Briefing">Briefing</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Review">Review</option>
@@ -658,497 +698,119 @@ export default function DesignerPortal() {
                     <option value="On Hold">On Hold</option>
                     <option value="Archived">Archived</option>
                   </select>
-                  
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="px-4 py-3 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-200"
-                  >
-                    <option value="recent">Recent</option>
-                    <option value="name">Name</option>
-                    <option value="client">Client</option>
-                    <option value="status">Status</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2 flex-1 overflow-y-auto">
-                {(selectedClient 
-                  ? filteredAndSortedProjects.filter(p => p.user_id === selectedClient)
-                  : filteredAndSortedProjects
-                ).map((project) => {
-                  const client = clientProfiles[project.user_id];
-                  const unreadCount = messages.filter(m => 
-                    m.project_id === project.id && !m.is_read && m.sender_type === 'user'
-                  ).length;
-
-                  return (
-                    <motion.button
-                      key={project.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3 }}
-                      onClick={() => {
-                        setSelectedProject(project);
-                        setNewStatus(project.status);
-                        fetchProjectFiles(project.id);
-                      }}
-                      className={`w-full text-left p-5 rounded-2xl transition-all duration-300 border-2 ${
-                        selectedProject?.id === project.id
-                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white border-purple-600 shadow-xl transform scale-[1.02]'
-                          : 'bg-white hover:bg-gray-50 text-gray-900 border-gray-200 hover:border-purple-200 hover:shadow-lg'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                            selectedProject?.id === project.id ? 'bg-white/20' : 'bg-gray-100'
-                          }`}>
-                            {getStatusIcon(project.status)}
-                          </div>
-                          <div className="flex-1">
-                            <h3 className={`font-bold text-sm mb-1 ${
-                              selectedProject?.id === project.id ? 'text-white' : 'text-gray-900'
-                            }`}>
-                              {project.name}
-                            </h3>
-                            <p className={`text-xs ${
-                              selectedProject?.id === project.id ? 'text-purple-100' : 'text-gray-500'
-                            }`}>
-                              {project.type}
-                            </p>
-                          </div>
-                        </div>
-                        {unreadCount > 0 && selectedProject?.id !== project.id && (
-                          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
-                            {unreadCount}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className={`text-sm font-medium ${
-                            selectedProject?.id === project.id ? 'text-purple-100' : 'text-gray-700'
-                          }`}>
-                            {client?.full_name || 'Unknown Client'}
-                          </p>
-                          <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
-                            selectedProject?.id === project.id 
-                              ? 'bg-white/20 text-white' 
-                              : project.status === 'Completed'
-                              ? 'bg-green-100 text-green-700'
-                              : project.status === 'Briefing'
-                              ? 'bg-purple-100 text-purple-700'
-                              : project.status === 'In Progress'
-                              ? 'bg-blue-100 text-blue-700'
-                              : project.status === 'Review'
-                              ? 'bg-yellow-100 text-yellow-700'
-                              : project.status === 'Revision'
-                              ? 'bg-orange-100 text-orange-700'
-                              : project.status === 'Archived'
-                              ? 'bg-gray-100 text-gray-700'
-                              : 'bg-red-100 text-red-700'
-                          }`}>
-                            {project.status}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center justify-between text-xs">
-                          <p className={`${
-                            selectedProject?.id === project.id ? 'text-purple-100' : 'text-gray-400'
-                          }`}>
-                            {new Date(project.created_at).toLocaleDateString()}
-                          </p>
-                          {project.deadline && (
-                            <div className={`flex items-center gap-1 ${
-                              selectedProject?.id === project.id ? 'text-purple-100' : 'text-gray-400'
-                            }`}>
-                              <Calendar className="w-3 h-3" />
-                              <span>{new Date(project.deadline).toLocaleDateString()}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </motion.button>
-                  );
-                })}
-                {projects.length === 0 && (
-                  <p className="text-gray-500 text-center py-8 text-sm">No projects yet</p>
-                )}
-              </div>
-              </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="lg:col-span-3 order-1 lg:order-2">
-            {selectedProject ? (
-              <div className="space-y-6">
-                {/* Project Header */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedProject.name}</h2>
-                      <p className="text-gray-600 mb-3">{selectedProject.description}</p>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span>Client: {clientProfiles[selectedProject.user_id]?.full_name || 'Unknown'}</span>
-                        <span>•</span>
-                        <span>{selectedProject.type}</span>
-                        <span>•</span>
-                        <span>{new Date(selectedProject.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status Updater */}
-                  <div className="flex gap-3 items-center pt-4 border-t border-gray-200">
-                    <label className="text-sm font-semibold text-gray-700">Update Status:</label>
-                    <select
-                      value={newStatus}
-                      onChange={(e) => setNewStatus(e.target.value)}
-                      className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    >
-                      <option value="Briefing">Briefing</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Review">Review</option>
-                      <option value="Revision">Revision</option>
-                      <option value="Completed">Completed</option>
-                      <option value="On Hold">On Hold</option>
-                      <option value="Archived">Archived</option>
-                    </select>
-                    {newStatus !== selectedProject.status && (
-                      <button
-                        onClick={() => updateProjectStatus(selectedProject.id, newStatus)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-semibold text-sm"
-                      >
-                        Save Status
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Chat */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5 text-purple-600" />
-                      <h3 className="text-lg font-bold text-gray-900">Project Chat</h3>
-                      <span className="bg-purple-100 text-purple-600 px-2 py-1 rounded-full text-xs font-bold">
-                        {messages.length}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>Real-time chat</span>
-                    </div>
-                  </div>
-
-                  {/* Messages */}
-                  <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto">
-                    {messages.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <MessageSquare className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                        <p className="text-sm">No messages yet</p>
-                        <p className="text-xs text-gray-400">Start a conversation with the client</p>
-                      </div>
-                    ) : (
-                      messages.map((msg) => (
-                        <motion.div
-                          key={msg.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={`flex ${msg.sender_type === 'designer' ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div className="max-w-[80%]">
-                            <div className={`flex items-center gap-2 mb-1 ${msg.sender_type === 'designer' ? 'justify-end' : 'justify-start'}`}>
-                              <span className={`text-xs font-semibold ${msg.sender_type === 'designer' ? 'text-green-600' : 'text-gray-600'}`}>
-                                {msg.sender_name}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                {new Date(msg.created_at).toLocaleTimeString('en-US', { 
-                                  hour: 'numeric', 
-                                  minute: '2-digit',
-                                  hour12: true 
-                                })}
-                              </span>
-                            </div>
-                            <div
-                              className={`p-3 rounded-2xl ${
-                                msg.sender_type === 'designer'
-                                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
-                                  : 'bg-gray-100 text-gray-900 border border-gray-200'
-                              }`}
-                            >
-                              <p className="text-sm leading-relaxed">{msg.content}</p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))
-                    )}
-                    <div ref={messagesEndRef} />
-                  </div>
-
-                  {/* Input */}
-                  <div className="flex gap-2 pt-4 border-t border-gray-200">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                      placeholder="Type your message to client..."
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
+                  {newStatus !== selectedProject.status && (
                     <button
-                      onClick={sendMessage}
-                      disabled={!newMessage.trim()}
-                      className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      onClick={() => updateProjectStatus(selectedProject.id, newStatus)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold text-sm"
                     >
-                      <Send className="w-4 h-4" />
-                      Send
+                      Update
                     </button>
-                  </div>
-                </div>
-
-                {/* Project Files */}
-                <div className="bg-white rounded-2xl border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-                    <div className="flex items-center gap-2">
-                      <FolderOpen className="w-5 h-5 text-purple-600" />
-                      <h3 className="text-lg font-bold text-gray-900">Project Files</h3>
-                      <span className="bg-purple-100 text-purple-600 px-2 py-1 rounded-full text-xs font-bold">
-                        {projectFiles.length}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span>Client uploads</span>
-                    </div>
-                  </div>
-
-                  {/* Files List */}
-                  <div className="space-y-3">
-                    {loadingFiles ? (
-                      <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-3"></div>
-                        <p className="text-sm text-gray-500">Loading files...</p>
-                      </div>
-                    ) : projectFiles.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <FolderOpen className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                        <p className="text-sm">No files uploaded yet</p>
-                        <p className="text-xs text-gray-400">Client files will appear here when uploaded</p>
-                      </div>
-                    ) : (
-                      projectFiles.map((file) => (
-                        <motion.div
-                          key={file.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100 transition-colors"
-                        >
-                          <div className="flex items-center gap-3 flex-1">
-                            {getFileIcon(file.file_name)}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">
-                                {file.file_name}
-                              </p>
-                              <div className="flex items-center gap-4 text-xs text-gray-500">
-                                <span>{formatFileSize(file.file_size)}</span>
-                                <span>{new Date(file.created_at).toLocaleDateString()}</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleFileDownload(file)}
-                              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Download file"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
-                            {file.file_url && (
-                              <button
-                                onClick={() => window.open(file.file_url!, '_blank')}
-                                className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                title="View file"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleFileDelete(file.id)}
-                              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Delete file"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </motion.div>
-                      ))
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
-            ) : (
-              <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-                <FolderOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Select a Project</h3>
-                <p className="text-gray-600">Choose a project from the list to view details and chat with clients</p>
-              </div>
-            )}
-          </div>
-        </div>
-        )}
 
-        {viewMode === 'clients' && (
-          <div className="space-y-6">
-            {/* Clients Overview */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Object.entries(projectsByClient).map(([clientId, clientData], index) => (
-                <motion.div
-                  key={clientId}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className="bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
-                >
-                  {/* Client Header */}
-                  <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center text-white text-lg font-bold">
-                        {clientData.client.full_name?.split(' ').map(n => n[0]).join('') || 'C'}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-900">{clientData.client.full_name || 'Unknown Client'}</h3>
-                        <p className="text-sm text-gray-500">{clientData.client.email}</p>
-                      </div>
-                      {clientData.unreadMessages > 0 && (
-                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                          {clientData.unreadMessages}
+              {/* Quick Chat */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Quick Message</h4>
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    placeholder="Type your message..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim()}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    Send Message
+                  </button>
+                </div>
+              </div>
+
+              {/* Recent Messages */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Recent Messages</h4>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {messages.slice(-5).map((msg) => (
+                    <div key={msg.id} className="p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-semibold text-gray-600">{msg.sender_name}</span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(msg.created_at).toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit',
+                            hour12: true 
+                          })}
                         </span>
-                      )}
-                    </div>
-                    
-                    {/* Client Stats */}
-                    <div className="grid grid-cols-3 gap-3 text-center">
-                      <div className="bg-white rounded-xl p-3">
-                        <div className="text-lg font-bold text-gray-900">{clientData.totalProjects}</div>
-                        <div className="text-xs text-gray-500">Total</div>
                       </div>
-                      <div className="bg-white rounded-xl p-3">
-                        <div className="text-lg font-bold text-blue-600">{clientData.activeProjects}</div>
-                        <div className="text-xs text-gray-500">Active</div>
-                      </div>
-                      <div className="bg-white rounded-xl p-3">
-                        <div className="text-lg font-bold text-green-600">{clientData.projects.filter(p => p.status === 'Completed').length}</div>
-                        <div className="text-xs text-gray-500">Done</div>
-                      </div>
+                      <p className="text-sm text-gray-700">{msg.content}</p>
                     </div>
-                  </div>
-
-                  {/* Client Projects */}
-                  <div className="p-6">
-                    <h4 className="font-semibold text-gray-900 mb-3">Recent Projects</h4>
-                    <div className="space-y-2">
-                      {clientData.projects.slice(0, 3).map((project) => (
-                        <div
-                          key={project.id}
-                          onClick={() => {
-                            setSelectedProject(project);
-                            setNewStatus(project.status);
-                            fetchProjectFiles(project.id);
-                            setViewMode('projects'); // Switch to projects view
-                          }}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer group"
-                        >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              {getStatusIcon(project.status)}
-                              <span className="font-medium text-sm text-gray-900 group-hover:text-purple-600 transition-colors">
-                                {project.name}
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-500">{project.type}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                              project.status === 'Completed'
-                                ? 'bg-green-100 text-green-700'
-                                : project.status === 'Briefing'
-                                ? 'bg-purple-100 text-purple-700'
-                                : project.status === 'In Progress'
-                                ? 'bg-blue-100 text-blue-700'
-                                : project.status === 'Review'
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : project.status === 'Revision'
-                                ? 'bg-orange-100 text-orange-700'
-                                : 'bg-red-100 text-red-700'
-                            }`}>
-                              {project.status}
-                            </span>
-                            {project.deadline && (
-                              <div className="flex items-center gap-1 text-xs text-gray-400">
-                                <Calendar className="w-3 h-3" />
-                                <span>{new Date(project.deadline).toLocaleDateString()}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      {clientData.projects.length > 3 && (
-                        <div className="text-center pt-2">
-                          <span className="text-xs text-gray-500">
-                            +{clientData.projects.length - 3} more projects
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Client Actions */}
-                  <div className="p-6 bg-gray-50 border-t border-gray-100">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedClient(clientId);
-                          setViewMode('projects');
-                        }}
-                        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm"
-                      >
-                        View All Projects
-                      </button>
-                      <button
-                        onClick={() => {
-                          // Find the most recent project for this client
-                          const recentProject = clientData.projects.sort((a, b) => 
-                            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-                          )[0];
-                          if (recentProject) {
-                            setSelectedProject(recentProject);
-                            setNewStatus(recentProject.status);
-                            fetchProjectFiles(recentProject.id);
-                            setViewMode('projects');
-                          }
-                        }}
-                        className="flex-1 bg-white text-purple-600 hover:bg-purple-50 font-semibold px-4 py-2 rounded-xl transition-colors text-sm border border-purple-200"
-                      >
-                        Start Chat
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Empty State */}
-            {Object.keys(projectsByClient).length === 0 && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-                <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">No Clients Yet</h3>
-                <p className="text-gray-600">Client projects will appear here when they're created</p>
+                  ))}
+                  {messages.length === 0 && (
+                    <p className="text-sm text-gray-500 text-center py-4">No messages yet</p>
+                  )}
+                </div>
               </div>
-            )}
+
+              {/* Project Files */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Project Files</h4>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {loadingFiles ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto mb-2"></div>
+                      <p className="text-xs text-gray-500">Loading files...</p>
+                    </div>
+                  ) : projectFiles.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">No files uploaded yet</p>
+                  ) : (
+                    projectFiles.map((file) => (
+                      <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          {getFileIcon(file.file_name)}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {file.file_name}
+                            </p>
+                            <p className="text-xs text-gray-500">{formatFileSize(file.file_size)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleFileDownload(file)}
+                            className="p-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                            title="Download"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                          {file.file_url && (
+                            <button
+                              onClick={() => window.open(file.file_url!, '_blank')}
+                              className="p-1 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                              title="View"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleFileDelete(file.id)}
+                            className="p-1 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
