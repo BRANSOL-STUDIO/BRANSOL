@@ -15,7 +15,7 @@ export default function DashboardPage() {
   
   const [activeTab, setActiveTab] = useState('overview');
   const [showNewProjectForm, setShowNewProjectForm] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<number | null>(null);
+  const [selectedProject, setSelectedProject] = useState<number | string | null>(null);
   const [projectDetailTab, setProjectDetailTab] = useState('files');
   const [activeProjectChat, setActiveProjectChat] = useState<number | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -824,7 +824,7 @@ export default function DashboardPage() {
                           </div>
                           <div>
                             <p className="text-xs text-gray-500 mb-0.5">Hours Used</p>
-                            <p className="text-sm font-semibold text-gray-900">{project.hoursUsed}h</p>
+                            <p className="text-sm font-semibold text-gray-900">{project.hours_used}h</p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-500 mb-0.5">Designer</p>
@@ -871,7 +871,7 @@ export default function DashboardPage() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   {(() => {
-                    const project = userData.projects.find(p => p.id === selectedProject);
+                    const project = supabaseProjects.find(p => p.id === selectedProject.toString());
                     if (!project) return null;
 
                     return (
@@ -1014,7 +1014,7 @@ export default function DashboardPage() {
                                 </div>
                                 <div className="bg-purple-50 rounded-xl p-4">
                                   <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">Hours</p>
-                                  <p className="text-sm font-bold text-purple-600">{project.hoursUsed}h</p>
+                                  <p className="text-sm font-bold text-purple-600">{project.hours_used}h</p>
                                 </div>
                                 <div className="bg-gray-50 rounded-xl p-4">
                                   <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">Designer</p>
@@ -1462,7 +1462,7 @@ export default function DashboardPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => {
-                                setSelectedProject(parseInt(project.id));
+                                setSelectedProject(project.id);
                                 setActiveTab('projects');
                               }}
                               className="flex-1 bg-white text-gray-700 hover:bg-gray-100 font-semibold px-4 py-2 rounded-xl transition-colors border border-gray-200"
