@@ -56,8 +56,7 @@ export default function DashboardNav({ userName, notifications = 0, onTabChange 
     try {
       console.log('🔄 Starting logout process...');
       await signOut();
-      console.log('✅ Logout successful, redirecting to home...');
-      router.push('/');
+      // signOut function now handles the redirect with page reload
     } catch (error) {
       console.error('❌ Error logging out:', error);
       alert('Failed to logout. Please try again.');
