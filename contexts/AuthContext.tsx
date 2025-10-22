@@ -145,50 +145,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Create profile
       if (data.user) {
         console.log('🔵 Creating profile for user:', data.user.id);
+        console.log('🔵 User email:', data.user.email);
+        console.log('🔵 Full name:', fullName);
         
-        // Create profile with only basic fields that we know exist
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .insert([{
-            id: data.user.id,
-            email: data.user.email,
-            full_name: fullName,
-          }])
-          .select();
+        try {
+          // Create profile with only basic fields that we know exist
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .insert([{
+              id: data.user.id,
+              email: data.user.email,
+              full_name: fullName,
+            }])
+            .select();
 
-        console.log('🔵 Profile creation response:', { profileData, profileError });
+          console.log('🔵 Profile creation response:', { profileData, profileError });
+          console.log('🔵 ProfileData type:', typeof profileData);
+          console.log('🔵 ProfileError type:', typeof profileError);
+          console.log('🔵 ProfileError keys:', profileError ? Object.keys(profileError) : 'null');
 
-        if (profileError) {
-          console.error('🔴 Profile creation error:', profileError);
-          console.error('🔴 Error code:', profileError.code);
-          console.error('🔴 Error message:', profileError.message);
-          console.error('🔴 Error details:', profileError.details);
+          if (profileError) {
+            console.error('🔴 Profile creation error:', profileError);
+            console.error('🔴 Error code:', profileError.code);
+            console.error('🔴 Error message:', profileError.message);
+            console.error('🔴 Error details:', profileError.details);
+            console.error('🔴 Full error object:', JSON.stringify(profileError, null, 2));
           
-          // If profile already exists (duplicate key), just continue - it's fine
-          if (profileError.code === '23505') {
-            console.log('ℹ️ Profile already exists, continuing...');
-          } else {
-            // Try again with minimal fields if first attempt failed
-            console.log('🔵 Retrying with minimal profile fields...');
-            const { data: retryData, error: retryError } = await supabase
-              .from('profiles')
-              .insert([{
-                id: data.user.id,
-                email: data.user.email,
-                full_name: fullName,
-              }])
-              .select();
-            
-            console.log('🔵 Retry response:', { retryData, retryError });
-            
-            if (retryError && retryError.code !== '23505') {
-              console.error('🔴 Retry also failed:', retryError);
+            // If profile already exists (duplicate key), just continue - it's fine
+            if (profileError.code === '23505') {
+              console.log('ℹ️ Profile already exists, continuing...');
             } else {
-              console.log('✅ Profile created with minimal fields');
+              // Try again with minimal fields if first attempt failed
+              console.log('🔵 Retrying with minimal profile fields...');
+              const { data: retryData, error: retryError } = await supabase
+                .from('profiles')
+                .insert([{
+                  id: data.user.id,
+                  email: data.user.email,
+                  full_name: fullName,
+                }])
+                .select();
+              
+              console.log('🔵 Retry response:', { retryData, retryError });
+              
+              if (retryError && retryError.code !== '23505') {
+                console.error('🔴 Retry also failed:', retryError);
+              } else {
+                console.log('✅ Profile created with minimal fields');
+              }
             }
+          } else {
+            console.log('✅ Profile created successfully:', profileData);
           }
-        } else {
-          console.log('✅ Profile created successfully:', profileData);
+        } catch (profileCreationError) {
+          console.error('🔴 Exception during profile creation:', profileCreationError);
         }
       }
 

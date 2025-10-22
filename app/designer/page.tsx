@@ -47,7 +47,7 @@ export default function DesignerPortal() {
   const [clientProfiles, setClientProfiles] = useState<Record<string, ClientProfile>>({});
   const [newMessage, setNewMessage] = useState('');
   const [newStatus, setNewStatus] = useState('');
-  const [designerName] = useState(profile?.full_name || 'Designer');
+  const designerName = profile?.full_name || 'Designer';
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
@@ -143,7 +143,7 @@ export default function DesignerPortal() {
         project_id: selectedProject.id,
         sender_id: user.id,
         sender_type: 'designer',
-        sender_name: designerName,
+        sender_name: profile?.full_name || 'Designer',
         content: newMessage,
         is_read: false,
       },
