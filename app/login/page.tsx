@@ -13,13 +13,32 @@ import { Suspense } from 'react';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signIn, loading: authLoading } = useAuth();
+  const { signIn, loading: authLoading, profile } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
   const redirectTo = searchParams.get('redirect') || '/dashboard';
+
+  // Auto-redirect when profile loads after successful login
+  useEffect(() => {
+    if (profile && !loading) {
+      // Check if user has a designer role and redirect accordingly
+      if (profile.role === 'designer' || profile.role === 'admin') {
+        router.push('/designer');
+      } else {
+        // Check if there's a specific redirect requested
+        if (redirectTo === '/designer') {
+          // If they were trying to access designer portal but aren't a designer
+          setError('Access denied: Designer portal is for designers only');
+          setLoading(false);
+          return;
+        }
+        router.push(redirectTo);
+      }
+    }
+  }, [profile, loading, router, redirectTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +50,8 @@ function LoginForm() {
     if (signInError) {
       setError(signInError.message);
       setLoading(false);
-    } else {
-      router.push(redirectTo);
     }
+    // The useEffect above will handle the redirect when profile loads
   };
 
   return (
