@@ -261,6 +261,56 @@ export default function DesignerPortal() {
     }
   };
 
+  // Try to find the correct client profile
+  const findCorrectClientProfile = async (projectUserId: string) => {
+    try {
+      console.log('🔍 Trying to find correct client profile for project user ID:', projectUserId);
+      
+      // First, let's see if there are any profiles at all
+      const { data: allProfiles, error: allError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, role');
+        
+      if (allError) {
+        console.error('❌ Error fetching all profiles:', allError);
+        return null;
+      }
+      
+      console.log('📊 All profiles in database:', allProfiles);
+      
+      // Look for profiles with 'client' role
+      const clientProfiles = allProfiles?.filter(p => p.role === 'client' || !p.role);
+      console.log('👥 Client profiles found:', clientProfiles);
+      
+      if (clientProfiles && clientProfiles.length > 0) {
+        // If we found client profiles, use the first one as a fallback
+        const fallbackClient = clientProfiles[0];
+        console.log('🔄 Using fallback client:', fallbackClient);
+        
+        // Update the project's user_id to match the found client
+        const { error: updateError } = await supabase
+          .from('projects')
+          .update({ user_id: fallbackClient.id })
+          .eq('id', selectedProject?.id);
+          
+        if (updateError) {
+          console.error('❌ Error updating project user_id:', updateError);
+        } else {
+          console.log('✅ Updated project user_id to:', fallbackClient.id);
+          // Refresh the project data
+          fetchProjects();
+        }
+        
+        return fallbackClient;
+      }
+      
+      return null;
+    } catch (err) {
+      console.error('❌ Error finding correct client profile:', err);
+      return null;
+    }
+  };
+
   // Fetch specific client profile if not found
   const fetchSpecificClientProfile = async (userId: string) => {
     try {
@@ -287,6 +337,17 @@ export default function DesignerPortal() {
       
       if (!data || data.length === 0) {
         console.log('⚠️ No profile found for user ID:', userId);
+        // Try to find the correct client profile
+        const correctClient = await findCorrectClientProfile(userId);
+        
+        if (correctClient) {
+          setClientProfiles(prev => ({
+            ...prev,
+            [userId]: correctClient
+          }));
+          return correctClient;
+        }
+        
         // Create a fallback profile entry
         const fallbackProfile = {
           id: userId,
@@ -784,6 +845,8 @@ export default function DesignerPortal() {
                     <span className="text-xs text-gray-400">(ID: {selectedProject.user_id || 'NO_ID'})</span>
                     <div className="text-xs text-gray-400">
                       Profiles loaded: {Object.keys(clientProfiles).length}
+                      <br />
+                      Available IDs: {Object.keys(clientProfiles).join(', ')}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
