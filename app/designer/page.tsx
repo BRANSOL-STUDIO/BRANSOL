@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { motion } from 'framer-motion';
-import { Send, Users, LogOut, MessageSquare, FolderOpen, Clock, ArrowLeft, Search, Filter, Calendar, AlertCircle, CheckCircle, XCircle, MoreHorizontal } from 'lucide-react';
+import { Send, Users, LogOut, MessageSquare, FolderOpen, Clock, ArrowLeft, Search, Filter, Calendar, AlertCircle, CheckCircle, XCircle, MoreHorizontal, Download, FileText, Image, File, Eye, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -38,6 +38,16 @@ interface ClientProfile {
   email: string | null;
 }
 
+interface ProjectFile {
+  id: string;
+  project_id: string;
+  file_name: string;
+  file_size: string | null;
+  file_url: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
 export default function DesignerPortal() {
   const router = useRouter();
   const { user, profile, signOut } = useAuth();
@@ -50,6 +60,8 @@ export default function DesignerPortal() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
+  const [projectFiles, setProjectFiles] = useState<ProjectFile[]>([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
   const designerName = profile?.full_name || 'Designer';
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
@@ -136,6 +148,28 @@ export default function DesignerPortal() {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
+  };
+
+  // Fetch project files
+  const fetchProjectFiles = async (projectId: string) => {
+    setLoadingFiles(true);
+    try {
+      const { data, error } = await supabase
+        .from('project_files')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching project files:', error);
+      } else {
+        setProjectFiles(data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching project files:', error);
+    } finally {
+      setLoadingFiles(false);
+    }
   };
 
   const sendMessage = async () => {
@@ -232,6 +266,68 @@ export default function DesignerPortal() {
         return <XCircle className="w-4 h-4 text-red-600" />;
       default:
         return <Clock className="w-4 h-4 text-gray-600" />;
+    }
+  };
+
+  // Get file icon based on file type
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'svg':
+      case 'webp':
+        return <Image className="w-4 h-4 text-blue-600" />;
+      case 'pdf':
+      case 'doc':
+      case 'docx':
+      case 'txt':
+        return <FileText className="w-4 h-4 text-red-600" />;
+      default:
+        return <File className="w-4 h-4 text-gray-600" />;
+    }
+  };
+
+  // Format file size
+  const formatFileSize = (size: string | null) => {
+    if (!size) return 'Unknown size';
+    const bytes = parseInt(size);
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // Handle file download
+  const handleFileDownload = (file: ProjectFile) => {
+    if (file.file_url) {
+      window.open(file.file_url, '_blank');
+    }
+  };
+
+  // Handle file deletion
+  const handleFileDelete = async (fileId: string) => {
+    if (!confirm('Are you sure you want to delete this file?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('project_files')
+        .delete()
+        .eq('id', fileId);
+
+      if (error) {
+        console.error('Error deleting file:', error);
+        alert('Failed to delete file');
+      } else {
+        // Refresh files list
+        if (selectedProject) {
+          fetchProjectFiles(selectedProject.id);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      alert('Failed to delete file');
     }
   };
 
@@ -336,6 +432,7 @@ export default function DesignerPortal() {
                       onClick={() => {
                         setSelectedProject(project);
                         setNewStatus(project.status);
+                        fetchProjectFiles(project.id);
                       }}
                       className={`w-full text-left p-4 rounded-xl transition-all border ${
                         selectedProject?.id === project.id
@@ -524,6 +621,87 @@ export default function DesignerPortal() {
                       <Send className="w-4 h-4" />
                       Send
                     </button>
+                  </div>
+                </div>
+
+                {/* Project Files */}
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <FolderOpen className="w-5 h-5 text-purple-600" />
+                      <h3 className="text-lg font-bold text-gray-900">Project Files</h3>
+                      <span className="bg-purple-100 text-purple-600 px-2 py-1 rounded-full text-xs font-bold">
+                        {projectFiles.length}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span>Client uploads</span>
+                    </div>
+                  </div>
+
+                  {/* Files List */}
+                  <div className="space-y-3">
+                    {loadingFiles ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-3"></div>
+                        <p className="text-sm text-gray-500">Loading files...</p>
+                      </div>
+                    ) : projectFiles.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <FolderOpen className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p className="text-sm">No files uploaded yet</p>
+                        <p className="text-xs text-gray-400">Client files will appear here when uploaded</p>
+                      </div>
+                    ) : (
+                      projectFiles.map((file) => (
+                        <motion.div
+                          key={file.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 flex-1">
+                            {getFileIcon(file.file_name)}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {file.file_name}
+                              </p>
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <span>{formatFileSize(file.file_size)}</span>
+                                <span>{new Date(file.created_at).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleFileDownload(file)}
+                              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Download file"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                            {file.file_url && (
+                              <button
+                                onClick={() => window.open(file.file_url!, '_blank')}
+                                className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                title="View file"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleFileDelete(file.id)}
+                              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete file"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </motion.div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
