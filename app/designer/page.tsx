@@ -524,10 +524,10 @@ export default function DesignerPortal() {
 
       <div className="container py-8">
         {viewMode === 'projects' ? (
-          <div className="grid lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Enhanced Projects List */}
-            <div className="lg:col-span-1">
-            <div className="bg-white rounded-3xl border border-gray-200 shadow-xl p-6 sticky top-32">
+            <div className="lg:col-span-1 order-2 lg:order-1">
+              <div className="bg-white rounded-3xl border border-gray-200 shadow-xl p-6 lg:sticky lg:top-32 lg:max-h-[calc(100vh-8rem)] overflow-hidden flex flex-col">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center">
                   <Users className="w-5 h-5 text-white" />
@@ -599,7 +599,7 @@ export default function DesignerPortal() {
                 </div>
               </div>
 
-              <div className="space-y-2 max-h-[500px] overflow-y-auto">
+              <div className="space-y-2 flex-1 overflow-y-auto">
                 {(selectedClient 
                   ? filteredAndSortedProjects.filter(p => p.user_id === selectedClient)
                   : filteredAndSortedProjects
@@ -700,11 +700,12 @@ export default function DesignerPortal() {
                   <p className="text-gray-500 text-center py-8 text-sm">No projects yet</p>
                 )}
               </div>
+              </div>
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 order-1 lg:order-2">
             {selectedProject ? (
               <div className="space-y-6">
                 {/* Project Header */}
