@@ -99,12 +99,53 @@ export default function DesignerPortal() {
   const fetchClientProfiles = async () => {
     try {
       console.log('🔍 Fetching client profiles...');
+      console.log('🔍 Current user:', user?.id, 'Current profile role:', profile?.role);
+      
+      // For designers, try to fetch all profiles
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email');
 
       if (error) {
         console.error('❌ Error fetching client profiles:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        
+        // If that fails, try fetching only profiles that have projects
+        console.log('🔄 Trying alternative approach - fetching profiles with projects...');
+        const { data: projectData } = await supabase
+          .from('projects')
+          .select('user_id');
+        
+        if (projectData && projectData.length > 0) {
+          const userIds = [...new Set(projectData.map(p => p.user_id))];
+          console.log('🔍 Found user IDs from projects:', userIds);
+          
+          // Try to fetch profiles for these specific users
+          const { data: altData, error: altError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .in('id', userIds);
+            
+          if (altError) {
+            console.error('❌ Alternative approach also failed:', altError);
+            return;
+          }
+          
+          console.log('📊 Alternative profiles data:', altData);
+          const profilesMap = (altData || []).reduce((acc, profile) => {
+            acc[profile.id] = profile;
+            return acc;
+          }, {} as Record<string, ClientProfile>);
+          
+          setClientProfiles(profilesMap);
+          return;
+        }
+        
         throw error;
       }
       
@@ -224,6 +265,8 @@ export default function DesignerPortal() {
   const fetchSpecificClientProfile = async (userId: string) => {
     try {
       console.log('🔍 Fetching specific client profile for:', userId);
+      console.log('🔍 Current user:', user?.id, 'Current profile role:', profile?.role);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email')
@@ -232,6 +275,12 @@ export default function DesignerPortal() {
 
       if (error) {
         console.error('❌ Error fetching specific client profile:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         return null;
       }
       
