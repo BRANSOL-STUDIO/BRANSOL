@@ -59,6 +59,7 @@ export default function DesignerPortal() {
   const [newStatus, setNewStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('recent');
+  const [activeSection, setActiveSection] = useState('all');
   const [projectFiles, setProjectFiles] = useState<ProjectFile[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
   const designerName = profile?.full_name || 'Designer';
@@ -230,7 +231,14 @@ export default function DesignerPortal() {
         (client?.full_name && client.full_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         project.type.toLowerCase().includes(searchQuery.toLowerCase());
       
-      return matchesSearch;
+      // Filter by active section
+      const matchesSection = activeSection === 'all' || 
+        (activeSection === 'briefing' && project.status === 'Briefing') ||
+        (activeSection === 'active' && project.status === 'In Progress') ||
+        (activeSection === 'review' && (project.status === 'Review' || project.status === 'Revision')) ||
+        (activeSection === 'archived' && (project.status === 'Completed' || project.status === 'Archived'));
+      
+      return matchesSearch && matchesSection;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -447,6 +455,78 @@ export default function DesignerPortal() {
               <option value="client">Client</option>
               <option value="status">Status</option>
             </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Workflow Section Tabs */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="container py-4">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-gray-100 rounded-xl p-1">
+              <button
+                onClick={() => setActiveSection('all')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  activeSection === 'all'
+                    ? 'bg-white text-purple-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                All Projects ({projects.length})
+              </button>
+              <button
+                onClick={() => setActiveSection('briefing')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  activeSection === 'briefing'
+                    ? 'bg-white text-purple-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-purple-600" />
+                  In Brief ({projects.filter(p => p.status === 'Briefing').length})
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveSection('active')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  activeSection === 'active'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-blue-600" />
+                  Active ({projects.filter(p => p.status === 'In Progress').length})
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveSection('review')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  activeSection === 'review'
+                    ? 'bg-white text-yellow-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-yellow-600" />
+                  In Review ({projects.filter(p => p.status === 'Review' || p.status === 'Revision').length})
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveSection('archived')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  activeSection === 'archived'
+                    ? 'bg-white text-gray-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4 text-gray-600" />
+                  Archived ({projects.filter(p => p.status === 'Completed' || p.status === 'Archived').length})
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </div>
