@@ -523,7 +523,7 @@ export default function DesignerPortal() {
       </div>
 
       <div className="container py-8">
-        {viewMode === 'projects' ? (
+        {viewMode === 'projects' && (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Enhanced Projects List */}
             <div className="lg:col-span-1 order-2 lg:order-1">
@@ -919,7 +919,10 @@ export default function DesignerPortal() {
               </div>
             )}
           </div>
-        ) : (
+        </div>
+        )}
+
+        {viewMode === 'clients' && (
           <div className="space-y-6">
             {/* Clients Overview */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
