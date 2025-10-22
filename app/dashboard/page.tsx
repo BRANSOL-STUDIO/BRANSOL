@@ -11,7 +11,7 @@ import { getDaysLeftInMonth, getTotalDaysInMonth, getMonthProgressPercentage, fo
 
 export default function DashboardPage() {
   const { user, profile, updateProfile } = useAuth();
-  const { projects: supabaseProjects, sendMessage: sendSupabaseMessage, createProject: createSupabaseProject, markProjectMessagesAsRead, loading: projectsLoading } = useProjectChat(user?.id);
+  const { projects: supabaseProjects, sendMessage: sendSupabaseMessage, createProject: createSupabaseProject, markProjectMessagesAsRead, completeProject, archiveProject, loading: projectsLoading } = useProjectChat(user?.id);
   
   const [activeTab, setActiveTab] = useState('overview');
   const [showNewProjectForm, setShowNewProjectForm] = useState(false);
@@ -21,6 +21,8 @@ export default function DashboardPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [completionNotes, setCompletionNotes] = useState('');
   const [message, setMessage] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [formData, setFormData] = useState({
@@ -298,6 +300,37 @@ export default function DashboardPage() {
       }
     }
   }, [activeProjectChat, supabaseProjects, markProjectMessagesAsRead]);
+
+  const handleCompleteProject = async () => {
+    if (!selectedProject) return;
+    
+    const project = supabaseProjects.find(p => p.id === selectedProject.toString());
+    if (!project) return;
+
+    const success = await completeProject(project.id, completionNotes);
+    if (success) {
+      setShowCompleteModal(false);
+      setCompletionNotes('');
+      alert('🎉 Project completed successfully! The designer has been notified.');
+    } else {
+      alert('❌ Failed to complete project. Please try again.');
+    }
+  };
+
+  const handleArchiveProject = async () => {
+    if (!selectedProject) return;
+    
+    const project = supabaseProjects.find(p => p.id === selectedProject.toString());
+    if (!project) return;
+
+    const success = await archiveProject(project.id);
+    if (success) {
+      setShowArchiveModal(false);
+      alert('📁 Project archived successfully!');
+    } else {
+      alert('❌ Failed to archive project. Please try again.');
+    }
+  };
 
   return (
     <>
@@ -870,6 +903,18 @@ export default function DashboardPage() {
                                 >
                                   <Download className="w-5 h-5" />
                                   Download All Files
+                                </motion.button>
+                              )}
+
+                              {/* Archive Button for Completed Projects */}
+                              {project.status === 'Completed' && (
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setShowArchiveModal(true)}
+                                  className="bg-gray-600 hover:bg-gray-700 text-white font-bold px-6 py-3 rounded-xl transition-all duration-300 shadow-lg flex items-center gap-2"
+                                >
+                                  📁 Archive Project
                                 </motion.button>
                               )}
 
@@ -2023,6 +2068,20 @@ export default function DashboardPage() {
                     </ul>
                   </div>
 
+                  {/* Completion Notes */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Completion Notes (Optional)
+                    </label>
+                    <textarea
+                      value={completionNotes}
+                      onChange={(e) => setCompletionNotes(e.target.value)}
+                      placeholder="Add any final notes or feedback for the designer..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                      rows={3}
+                    />
+                  </div>
+
                   <div className="flex gap-3">
                     <button 
                       onClick={() => setShowCompleteModal(false)}
@@ -2031,14 +2090,70 @@ export default function DashboardPage() {
                       Cancel
                     </button>
                     <button 
-                      onClick={() => {
-                        console.log('Project marked as complete');
-                        setShowCompleteModal(false);
-                        setSelectedProject(null);
-                      }}
+                      onClick={handleCompleteProject}
                       className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl"
                     >
                       ✓ Approve & Complete
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Archive Project Modal */}
+          {showArchiveModal && (
+            <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" onClick={() => setShowArchiveModal(false)}>
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-white rounded-3xl max-w-lg w-full p-8"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-2xl">
+                    📁
+                  </div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-4">Archive Project?</h2>
+                  <p className="text-gray-600 mb-8 leading-relaxed">
+                    Archiving will move this project to your completed archive. 
+                    You can still access all files and chat history, but it won&apos;t appear in your active projects.
+                  </p>
+                  
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 mb-6 border border-gray-200">
+                    <h3 className="font-bold text-gray-900 mb-3">Archive includes:</h3>
+                    <ul className="space-y-2 text-left text-sm text-gray-700">
+                      <li className="flex items-center gap-2">
+                        <span className="text-gray-600">📁</span>
+                        All project files remain downloadable
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-gray-600">💬</span>
+                        Complete chat history preserved
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-gray-600">📊</span>
+                        Project statistics maintained
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-gray-600">🔍</span>
+                        Searchable in archive section
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => setShowArchiveModal(false)}
+                      className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-4 rounded-xl transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={handleArchiveProject}
+                      className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl"
+                    >
+                      📁 Archive Project
                     </button>
                   </div>
                 </div>

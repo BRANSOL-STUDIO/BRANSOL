@@ -264,6 +264,8 @@ export default function DesignerPortal() {
         return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'On Hold':
         return <XCircle className="w-4 h-4 text-red-600" />;
+      case 'Archived':
+        return <FolderOpen className="w-4 h-4 text-gray-600" />;
       default:
         return <Clock className="w-4 h-4 text-gray-600" />;
     }
@@ -399,11 +401,12 @@ export default function DesignerPortal() {
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
-                    <option value="all">All Status</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Review">Review</option>
-                    <option value="Completed">Completed</option>
-                    <option value="On Hold">On Hold</option>
+                             <option value="all">All Status</option>
+                             <option value="In Progress">In Progress</option>
+                             <option value="Review">Review</option>
+                             <option value="Completed">Completed</option>
+                             <option value="On Hold">On Hold</option>
+                             <option value="Archived">Archived</option>
                   </select>
                   
                   <select
@@ -474,6 +477,8 @@ export default function DesignerPortal() {
                             ? 'bg-blue-100 text-blue-700'
                             : project.status === 'Review'
                             ? 'bg-yellow-100 text-yellow-700'
+                            : project.status === 'Archived'
+                            ? 'bg-gray-100 text-gray-700'
                             : 'bg-red-100 text-red-700'
                         }`}>
                           {project.status}
@@ -530,6 +535,7 @@ export default function DesignerPortal() {
                       <option value="Review">Review</option>
                       <option value="Completed">Completed</option>
                       <option value="On Hold">On Hold</option>
+                      <option value="Archived">Archived</option>
                     </select>
                     {newStatus !== selectedProject.status && (
                       <button

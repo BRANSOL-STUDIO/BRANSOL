@@ -215,12 +215,82 @@ export function useProjectChat(userId?: string) {
     }
   };
 
+  const completeProject = async (projectId: string, completionNotes?: string) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ 
+          status: 'Completed',
+          completed_at: new Date().toISOString(),
+          completion_notes: completionNotes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', projectId);
+
+      if (error) throw error;
+
+      // Update local state
+      setProjects(prev => 
+        prev.map(project => 
+          project.id === projectId 
+            ? { 
+                ...project, 
+                status: 'Completed',
+                completed_at: new Date().toISOString(),
+                completion_notes: completionNotes
+              }
+            : project
+        )
+      );
+
+      return true;
+    } catch (err) {
+      console.error('Error completing project:', err);
+      return false;
+    }
+  };
+
+  const archiveProject = async (projectId: string) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ 
+          status: 'Archived',
+          archived_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', projectId);
+
+      if (error) throw error;
+
+      // Update local state
+      setProjects(prev => 
+        prev.map(project => 
+          project.id === projectId 
+            ? { 
+                ...project, 
+                status: 'Archived',
+                archived_at: new Date().toISOString()
+              }
+            : project
+        )
+      );
+
+      return true;
+    } catch (err) {
+      console.error('Error archiving project:', err);
+      return false;
+    }
+  };
+
   return {
     projects,
     loading,
     sendMessage,
     createProject,
     markProjectMessagesAsRead,
+    completeProject,
+    archiveProject,
     refetch: fetchProjects,
   };
 }

@@ -20,6 +20,7 @@ export interface ProjectFile {
 
 export interface Project {
   id: string;
+  user_id: string;
   name: string;
   type: string;
   description?: string;
@@ -27,6 +28,11 @@ export interface Project {
   deadline?: string;
   hours_used: number;
   designer_name?: string;
+  completed_at?: string;
+  completed_by?: string;
+  archived_at?: string;
+  archived_by?: string;
+  completion_notes?: string;
   created_at: string;
   updated_at: string;
   messages?: Message[];
