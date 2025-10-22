@@ -766,7 +766,7 @@ export default function DashboardPage() {
                           </div>
                           <div>
                             <p className="text-xs text-gray-500 mb-0.5">Designer</p>
-                            <p className="text-sm font-semibold text-gray-900">{project.designer}</p>
+                            <p className="text-sm font-semibold text-gray-900">{project.designer_name || 'Unassigned'}</p>
                           </div>
                         </div>
 
@@ -946,9 +946,9 @@ export default function DashboardPage() {
                                   <p className="text-xs text-gray-500 mb-1 uppercase tracking-wider">Designer</p>
                                   <div className="flex items-center gap-2">
                                     <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                      {project.designer.split(' ').map(n => n[0]).join('')}
+                                      {(project.designer_name || 'U').split(' ').map(n => n[0]).join('')}
                                     </div>
-                                    <p className="text-xs font-bold text-gray-900">{project.designer.split(' ')[0]}</p>
+                                    <p className="text-xs font-bold text-gray-900">{(project.designer_name || 'Unassigned').split(' ')[0]}</p>
                                   </div>
                                 </div>
                               </div>
@@ -1050,7 +1050,7 @@ export default function DashboardPage() {
                                         <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">✓</div>
                                         <div className="flex-1">
                                           <p className="font-bold text-gray-900 text-lg mb-1">Project Briefed</p>
-                                          <p className="text-sm text-gray-600 mb-2">Initial requirements submitted and reviewed by {project.designer}</p>
+                                          <p className="text-sm text-gray-600 mb-2">Initial requirements submitted and reviewed by {project.designer_name || 'designer'}</p>
                                           <p className="text-xs text-gray-500">{project.createdDate}</p>
                                         </div>
                                       </motion.div>
@@ -1063,7 +1063,7 @@ export default function DashboardPage() {
                                         <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl shadow-lg">🎨</div>
                                         <div className="flex-1">
                                           <p className="font-bold text-gray-900 text-lg mb-1">Design In Progress</p>
-                                          <p className="text-sm text-gray-600 mb-2">{project.designer} is actively working on your project</p>
+                                          <p className="text-sm text-gray-600 mb-2">{project.designer_name || 'Designer'} is actively working on your project</p>
                                           <p className="text-xs text-gray-500">Last update: {project.lastUpdate}</p>
                                         </div>
                                       </motion.div>
@@ -1104,7 +1104,7 @@ export default function DashboardPage() {
                                         <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center text-xl">📄</div>
                                         <div className="flex-1">
                                           <p className="font-semibold text-gray-900">Files uploaded</p>
-                                          <p className="text-sm text-gray-600">{project.designer} added {project.files.length} new files</p>
+                                          <p className="text-sm text-gray-600">{project.designer_name || 'Designer'} added {project.files.length} new files</p>
                                           <p className="text-xs text-gray-400 mt-1">{project.lastUpdate}</p>
                                         </div>
                                       </motion.div>
@@ -1117,7 +1117,7 @@ export default function DashboardPage() {
                                         <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-xl">💬</div>
                                         <div className="flex-1">
                                           <p className="font-semibold text-gray-900">New message</p>
-                                          <p className="text-sm text-gray-600">{project.designer} sent you a message</p>
+                                          <p className="text-sm text-gray-600">{project.designer_name || 'Designer'} sent you a message</p>
                                           <p className="text-xs text-gray-400 mt-1">2 hours ago</p>
                                         </div>
                                       </motion.div>
@@ -1157,10 +1157,10 @@ export default function DashboardPage() {
                             <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-200 p-6 h-fit sticky top-0">
                               <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
                                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center text-white text-sm font-bold">
-                                  {project.designer.split(' ').map(n => n[0]).join('')}
+                                  {(project.designer_name || 'U').split(' ').map(n => n[0]).join('')}
                                 </div>
                                 <div>
-                                  <h3 className="font-bold text-gray-900">{project.designer}</h3>
+                                  <h3 className="font-bold text-gray-900">{project.designer_name || 'Unassigned'}</h3>
                                   <p className="text-xs text-gray-500">Senior Designer</p>
                                 </div>
                               </div>
@@ -1263,7 +1263,7 @@ export default function DashboardPage() {
                         <div className="flex items-start gap-4">
                           {/* Designer Avatar */}
                           <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center text-white text-lg font-bold shadow-md group-hover:scale-110 transition-transform duration-300">
-                            {project.designer.split(' ').map(n => n[0]).join('')}
+                            {(project.designer_name || 'U').split(' ').map(n => n[0]).join('')}
                           </div>
 
                           {/* Chat Info */}
@@ -1271,7 +1271,7 @@ export default function DashboardPage() {
                             <div className="flex items-center justify-between mb-2">
                               <div>
                                 <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors">{project.name}</h3>
-                                <p className="text-sm text-gray-500">{project.designer}</p>
+                                <p className="text-sm text-gray-500">{project.designer_name || 'Unassigned'}</p>
                               </div>
                               {unreadCount > 0 && (
                                 <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-md animate-pulse">

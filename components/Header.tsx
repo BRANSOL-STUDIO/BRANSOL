@@ -21,7 +21,9 @@ export default function Header() {
               alt={SITE.brand.name}
               width={120}
               height={32}
+              priority
               className="h-8 w-auto"
+              style={{ height: "auto" }}
             />
           </Link>
 
