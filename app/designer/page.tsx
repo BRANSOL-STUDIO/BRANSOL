@@ -345,57 +345,6 @@ export default function DesignerPortal() {
     }
   };
 
-  // Project Card Component
-  const ProjectCard = ({ project, client, onClick, isSelected }: { 
-    project: Project; 
-    client: ClientProfile | undefined; 
-    onClick: () => void; 
-    isSelected: boolean;
-  }) => {
-    const unreadCount = messages.filter(m => 
-      m.project_id === project.id && !m.is_read && m.sender_type === 'user'
-    ).length;
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        onClick={onClick}
-        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-          isSelected 
-            ? 'border-purple-500 bg-purple-50 shadow-lg' 
-            : 'border-gray-200 bg-white hover:border-gray-300'
-        }`}
-      >
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
-            {getStatusIcon(project.status)}
-            <h4 className="font-bold text-sm text-gray-900 truncate">{project.name}</h4>
-          </div>
-          {unreadCount > 0 && (
-            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-              {unreadCount}
-            </span>
-          )}
-        </div>
-        
-        <div className="space-y-2">
-          <p className="text-xs text-gray-600 truncate">{project.type}</p>
-          <p className="text-xs font-medium text-gray-700">{client?.full_name || 'Unknown Client'}</p>
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>{new Date(project.created_at).toLocaleDateString()}</span>
-            {project.deadline && (
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                <span>{new Date(project.deadline).toLocaleDateString()}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </motion.div>
-    );
-  };
-
   // Don't render if not a designer
   if (profile && profile.role !== 'designer' && profile.role !== 'admin') {
     return null;
@@ -413,7 +362,7 @@ export default function DesignerPortal() {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold">Designer Portal</h1>
-                <p className="text-sm text-white/70">Project Management Board</p>
+                <p className="text-sm text-white/70">Project Management List</p>
               </div>
             </div>
             
@@ -502,147 +451,137 @@ export default function DesignerPortal() {
         </div>
       </div>
 
-      {/* Kanban Board */}
+      {/* Asana-style List View */}
       <div className="container py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          {/* Briefing Column */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 text-white">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg">Briefing</h3>
-                <span className="bg-white/20 px-2 py-1 rounded-full text-sm font-bold">
-                  {filteredAndSortedProjects.filter(p => p.status === 'Briefing').length}
-                </span>
-              </div>
-              <p className="text-purple-100 text-sm">Requirements gathering</p>
-            </div>
-            <div className="p-4 space-y-3 min-h-[400px]">
-              {filteredAndSortedProjects.filter(p => p.status === 'Briefing').map((project) => (
-                <ProjectCard 
-                  key={project.id} 
-                  project={project} 
-                  client={clientProfiles[project.user_id]}
-                  onClick={() => {
-                    setSelectedProject(project);
-                    setNewStatus(project.status);
-                    fetchProjectFiles(project.id);
-                  }}
-                  isSelected={selectedProject?.id === project.id}
-                />
-              ))}
+        {/* Projects List Table */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
+          {/* Table Header */}
+          <div className="bg-gray-50 border-b border-gray-200 px-6 py-4">
+            <div className="grid grid-cols-12 gap-4 text-sm font-semibold text-gray-600">
+              <div className="col-span-4">Project</div>
+              <div className="col-span-2">Client</div>
+              <div className="col-span-2">Status</div>
+              <div className="col-span-2">Created</div>
+              <div className="col-span-1">Messages</div>
+              <div className="col-span-1">Actions</div>
             </div>
           </div>
 
-          {/* In Progress Column */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 text-white">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg">In Progress</h3>
-                <span className="bg-white/20 px-2 py-1 rounded-full text-sm font-bold">
-                  {filteredAndSortedProjects.filter(p => p.status === 'In Progress').length}
-                </span>
-              </div>
-              <p className="text-blue-100 text-sm">Active design work</p>
-            </div>
-            <div className="p-4 space-y-3 min-h-[400px]">
-              {filteredAndSortedProjects.filter(p => p.status === 'In Progress').map((project) => (
-                <ProjectCard 
-                  key={project.id} 
-                  project={project} 
-                  client={clientProfiles[project.user_id]}
-                  onClick={() => {
-                    setSelectedProject(project);
-                    setNewStatus(project.status);
-                    fetchProjectFiles(project.id);
-                  }}
-                  isSelected={selectedProject?.id === project.id}
-                />
-              ))}
-            </div>
-          </div>
+          {/* Table Body */}
+          <div className="divide-y divide-gray-200">
+            {filteredAndSortedProjects.map((project) => {
+              const client = clientProfiles[project.user_id];
+              const unreadCount = messages.filter(m => 
+                m.project_id === project.id && !m.is_read && m.sender_type === 'user'
+              ).length;
 
-          {/* Review Column */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-4 text-white">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg">Review</h3>
-                <span className="bg-white/20 px-2 py-1 rounded-full text-sm font-bold">
-                  {filteredAndSortedProjects.filter(p => p.status === 'Review').length}
-                </span>
-              </div>
-              <p className="text-yellow-100 text-sm">Client review phase</p>
-            </div>
-            <div className="p-4 space-y-3 min-h-[400px]">
-              {filteredAndSortedProjects.filter(p => p.status === 'Review').map((project) => (
-                <ProjectCard 
-                  key={project.id} 
-                  project={project} 
-                  client={clientProfiles[project.user_id]}
+              return (
+                <motion.div
+                  key={project.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                    selectedProject?.id === project.id ? 'bg-purple-50 border-l-4 border-purple-500' : ''
+                  }`}
                   onClick={() => {
                     setSelectedProject(project);
                     setNewStatus(project.status);
                     fetchProjectFiles(project.id);
                   }}
-                  isSelected={selectedProject?.id === project.id}
-                />
-              ))}
-            </div>
-          </div>
+                >
+                  {/* Project Info */}
+                  <div className="col-span-4 flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      {getStatusIcon(project.status)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-semibold text-gray-900 truncate">
+                        {project.name}
+                      </h3>
+                      <p className="text-xs text-gray-500 truncate">{project.type}</p>
+                    </div>
+                  </div>
 
-          {/* Revision Column */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4 text-white">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg">Revision</h3>
-                <span className="bg-white/20 px-2 py-1 rounded-full text-sm font-bold">
-                  {filteredAndSortedProjects.filter(p => p.status === 'Revision').length}
-                </span>
-              </div>
-              <p className="text-orange-100 text-sm">Making revisions</p>
-            </div>
-            <div className="p-4 space-y-3 min-h-[400px]">
-              {filteredAndSortedProjects.filter(p => p.status === 'Revision').map((project) => (
-                <ProjectCard 
-                  key={project.id} 
-                  project={project} 
-                  client={clientProfiles[project.user_id]}
-                  onClick={() => {
-                    setSelectedProject(project);
-                    setNewStatus(project.status);
-                    fetchProjectFiles(project.id);
-                  }}
-                  isSelected={selectedProject?.id === project.id}
-                />
-              ))}
-            </div>
-          </div>
+                  {/* Client */}
+                  <div className="col-span-2 flex items-center">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                        {client?.full_name?.split(' ').map(n => n[0]).join('') || 'C'}
+                      </div>
+                      <span className="text-sm text-gray-700 truncate">
+                        {client?.full_name || 'Unknown Client'}
+                      </span>
+                    </div>
+                  </div>
 
-          {/* Completed Column */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 text-white">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg">Completed</h3>
-                <span className="bg-white/20 px-2 py-1 rounded-full text-sm font-bold">
-                  {filteredAndSortedProjects.filter(p => p.status === 'Completed').length}
-                </span>
+                  {/* Status */}
+                  <div className="col-span-2 flex items-center">
+                    <select
+                      value={project.status}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        updateProjectStatus(project.id, e.target.value);
+                      }}
+                      className="text-xs px-2 py-1 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <option value="Briefing">Briefing</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Review">Review</option>
+                      <option value="Revision">Revision</option>
+                      <option value="Completed">Completed</option>
+                      <option value="On Hold">On Hold</option>
+                      <option value="Archived">Archived</option>
+                    </select>
+                  </div>
+
+                  {/* Created Date */}
+                  <div className="col-span-2 flex items-center">
+                    <div className="text-sm text-gray-600">
+                      {new Date(project.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  {/* Messages */}
+                  <div className="col-span-1 flex items-center justify-center">
+                    {unreadCount > 0 ? (
+                      <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                        {unreadCount}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">0</span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="col-span-1 flex items-center justify-center">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedProject(project);
+                        setNewStatus(project.status);
+                        fetchProjectFiles(project.id);
+                      }}
+                      className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 p-1 rounded transition-colors"
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+
+            {/* Empty State */}
+            {filteredAndSortedProjects.length === 0 && (
+              <div className="px-6 py-12 text-center">
+                <FolderOpen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Projects Found</h3>
+                <p className="text-gray-600">
+                  {searchQuery ? 'No projects match your search criteria' : 'No projects have been created yet'}
+                </p>
               </div>
-              <p className="text-green-100 text-sm">Project finished</p>
-            </div>
-            <div className="p-4 space-y-3 min-h-[400px]">
-              {filteredAndSortedProjects.filter(p => p.status === 'Completed').map((project) => (
-                <ProjectCard 
-                  key={project.id} 
-                  project={project} 
-                  client={clientProfiles[project.user_id]}
-                  onClick={() => {
-                    setSelectedProject(project);
-                    setNewStatus(project.status);
-                    fetchProjectFiles(project.id);
-                  }}
-                  isSelected={selectedProject?.id === project.id}
-                />
-              ))}
-            </div>
+            )}
           </div>
         </div>
 
