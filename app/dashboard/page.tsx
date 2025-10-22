@@ -7,6 +7,7 @@ import Link from 'next/link';
 import DashboardNav from '@/components/DashboardNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProjectChat } from '@/hooks/useProjectChat';
+import { getDaysLeftInMonth, getTotalDaysInMonth, getMonthProgressPercentage, formatEndOfMonth, getCurrentMonthName } from '@/lib/utils/hoursTracking';
 
 export default function DashboardPage() {
   const { user, profile, updateProfile } = useAuth();
@@ -324,22 +325,22 @@ export default function DashboardPage() {
                 </div>
               </div>
               
-              {/* Hours Remaining Widget */}
+              {/* Days Left in Month Widget */}
               <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-4 border border-purple-100">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-semibold text-gray-700">Hours Remaining</p>
-                  <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full font-bold">{subscription.plan}</span>
+                  <p className="text-sm font-semibold text-gray-700">Days Left in Month</p>
+                  <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full font-bold">{profile?.plan || subscription.plan}</span>
                 </div>
-                <div className="text-3xl font-black text-purple-600 mb-2">{userData.hoursRemaining}</div>
+                <div className="text-3xl font-black text-purple-600 mb-2">{getDaysLeftInMonth()}</div>
                 <div className="bg-gray-200 rounded-full h-2 mb-2">
                   <motion.div 
                     initial={{ width: 0 }}
-                    animate={{ width: `${(userData.hoursRemaining / userData.hoursTotal) * 100}%` }}
+                    animate={{ width: `${100 - getMonthProgressPercentage()}%` }}
                     transition={{ duration: 1, delay: 0.5 }}
                     className="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full"
                   ></motion.div>
                 </div>
-                <p className="text-xs text-gray-600">of {userData.hoursTotal} hours this month</p>
+                <p className="text-xs text-gray-600">until {formatEndOfMonth()}</p>
               </div>
             </div>
 
@@ -460,7 +461,7 @@ export default function DashboardPage() {
               >
                 {/* Stats Grid */}
                 <div className="grid md:grid-cols-3 gap-6">
-                  {/* Hours Remaining Card */}
+                  {/* Days Left in Month Card */}
                   <motion.div 
                     whileHover={{ y: -4 }}
                     className="bg-gradient-to-br from-purple-600 via-purple-500 to-blue-600 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden group"
@@ -473,22 +474,22 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between mb-6">
                         <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                           <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                         </div>
                         <span className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full">{userData.plan}</span>
                       </div>
-                      <div className="text-5xl font-black mb-2">{userData.hoursRemaining}</div>
-                      <div className="text-lg opacity-90 mb-4">Hours Remaining</div>
+                      <div className="text-5xl font-black mb-2">{getDaysLeftInMonth()}</div>
+                      <div className="text-lg opacity-90 mb-4">Days Left in {getCurrentMonthName().split(' ')[0]}</div>
                       <div className="mt-6 bg-white/20 rounded-full h-3 overflow-hidden">
                         <motion.div 
                           initial={{ width: 0 }}
-                          animate={{ width: `${(userData.hoursRemaining / userData.hoursTotal) * 100}%` }}
+                          animate={{ width: `${100 - getMonthProgressPercentage()}%` }}
                           transition={{ duration: 1, delay: 0.5 }}
                           className="bg-white h-3 rounded-full shadow-lg"
                         ></motion.div>
                       </div>
-                      <p className="text-xs opacity-75 mt-2">{userData.hoursUsed} of {userData.hoursTotal} hours used</p>
+                      <p className="text-xs opacity-75 mt-2">Resets {formatEndOfMonth()}</p>
                     </div>
                   </motion.div>
 
@@ -1614,26 +1615,27 @@ export default function DashboardPage() {
 
                       <div className="grid grid-cols-2 gap-6 mb-6">
                         <div>
-                          <p className="text-sm opacity-75 mb-1">Hours This Month</p>
-                          <p className="text-2xl font-bold">{subscription.hoursRemaining} / {subscription.hoursIncluded}</p>
+                          <p className="text-sm opacity-75 mb-1">Current Month</p>
+                          <p className="text-2xl font-bold">{getCurrentMonthName()}</p>
                         </div>
                         <div>
-                          <p className="text-sm opacity-75 mb-1">Next Billing</p>
-                          <p className="text-2xl font-bold">{subscription.nextBilling.split(',')[0]}</p>
+                          <p className="text-sm opacity-75 mb-1">Days Remaining</p>
+                          <p className="text-2xl font-bold">{getDaysLeftInMonth()} days</p>
                         </div>
                       </div>
 
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium">Usage</span>
-                          <span className="text-sm font-bold">{Math.round((subscription.hoursUsed / subscription.hoursIncluded) * 100)}%</span>
+                          <span className="text-sm font-medium">Month Progress</span>
+                          <span className="text-sm font-bold">{getMonthProgressPercentage()}%</span>
                         </div>
                         <div className="bg-white/20 rounded-full h-3">
                           <div 
                             className="bg-white h-3 rounded-full transition-all duration-500"
-                            style={{ width: `${(subscription.hoursUsed / subscription.hoursIncluded) * 100}%` }}
+                            style={{ width: `${getMonthProgressPercentage()}%` }}
                           ></div>
                         </div>
+                        <p className="text-xs opacity-75 mt-2">Resets on {formatEndOfMonth()}</p>
                       </div>
                     </div>
 

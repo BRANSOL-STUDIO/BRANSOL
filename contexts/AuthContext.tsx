@@ -17,6 +17,9 @@ interface Profile {
   plan: string;
   hours_remaining: number;
   hours_total: number;
+  hours_reset_date: string;
+  billing_day: number;
+  created_at?: string;
 }
 
 interface AuthContextType {
@@ -154,6 +157,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             plan: 'Professional',
             hours_remaining: 10,
             hours_total: 10,
+            hours_reset_date: new Date().toISOString(),
+            billing_day: 1,
           },
         ]).select();
 
