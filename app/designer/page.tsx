@@ -270,8 +270,7 @@ export default function DesignerPortal() {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email')
-        .eq('id', userId)
-        .single();
+        .eq('id', userId);
 
       if (error) {
         console.error('❌ Error fetching specific client profile:', error);
@@ -286,13 +285,30 @@ export default function DesignerPortal() {
       
       console.log('📊 Specific client profile data:', data);
       
+      if (!data || data.length === 0) {
+        console.log('⚠️ No profile found for user ID:', userId);
+        // Create a fallback profile entry
+        const fallbackProfile = {
+          id: userId,
+          full_name: `Client ${userId.slice(0, 8)}`,
+          email: null
+        };
+        
+        setClientProfiles(prev => ({
+          ...prev,
+          [userId]: fallbackProfile
+        }));
+        
+        return fallbackProfile;
+      }
+      
       // Add to clientProfiles map
       setClientProfiles(prev => ({
         ...prev,
-        [userId]: data
+        [userId]: data[0]
       }));
       
-      return data;
+      return data[0];
     } catch (err) {
       console.error('❌ Error fetching specific client profile:', err);
       return null;
