@@ -40,10 +40,23 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     // Redirect to login if accessing protected routes without authentication
-    if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
+    if (!user && (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/designer'))) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
       return NextResponse.redirect(loginUrl);
+    }
+
+    // Check designer access for designer portal
+    if (user && request.nextUrl.pathname.startsWith('/designer')) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profileData && profileData.role !== 'designer' && profileData.role !== 'admin') {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
     }
 
     return supabaseResponse
