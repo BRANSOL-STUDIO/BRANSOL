@@ -133,32 +133,11 @@ export default function DashboardPage() {
   // Calculate total unread messages from appropriate data source (only active projects)
   const totalUnreadMessages = user ? 
     supabaseProjects
-      .filter(project => {
-        const isActive = project.status !== 'Completed' && project.status !== 'Archived';
-        console.log(`🔍 Project ${project.name}: status="${project.status}", isActive=${isActive}`);
-        return isActive;
-      })
+      .filter(project => project.status !== 'Completed' && project.status !== 'Archived')
       .reduce((count, project) => {
-        const unreadCount = project.messages.filter(m => !m.is_read && m.sender_type === 'designer').length;
-        console.log(`🔍 Project ${project.name}: ${unreadCount} unread messages`);
-        return count + unreadCount;
+        return count + project.messages.filter(m => !m.is_read && m.sender_type === 'designer').length;
       }, 0) :
     0; // No notifications for mock data
-
-  // Debug logging
-  console.log('🔍 Dashboard Debug:', {
-    user: user ? 'authenticated' : 'not authenticated',
-    supabaseProjectsCount: supabaseProjects.length,
-    activeProjectsCount: supabaseProjects.filter(p => p.status !== 'Completed' && p.status !== 'Archived').length,
-    totalUnreadMessages,
-    userProjectsCount: userProjects.length,
-    allProjects: supabaseProjects.map(p => ({
-      id: p.id,
-      name: p.name,
-      status: p.status,
-      unreadMessages: p.messages.filter(m => !m.is_read && m.sender_type === 'designer').length
-    }))
-  });
 
   const userData = {
     name: profile?.full_name || "Ricardo Beaumont",
@@ -466,7 +445,10 @@ export default function DashboardPage() {
                   <span className="text-xl">💬</span>
                   <span>Chat</span>
                   {userData.recentMessages > 0 && (
-                    <span className="ml-auto bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                    <span 
+                      key={`notification-${userData.recentMessages}`}
+                      className="ml-auto bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse"
+                    >
                       {userData.recentMessages}
                     </span>
                   )}
@@ -630,7 +612,10 @@ export default function DashboardPage() {
                           </svg>
                         </div>
                         {userData.recentMessages > 0 && (
-                          <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse">
+                          <span 
+                            key={`overview-notification-${userData.recentMessages}`}
+                            className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse"
+                          >
                             {userData.recentMessages} New
                           </span>
                         )}
