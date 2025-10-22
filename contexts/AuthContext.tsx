@@ -69,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('🔵 Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -76,8 +77,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) {
+        console.log('🔵 Profile fetch error:', error.code, error.message);
         // If profile doesn't exist, create it
         if (error.code === 'PGRST116') {
+          console.log('🔵 Creating new profile...');
           const { data: userData } = await supabase.auth.getUser();
           if (userData.user) {
             const newProfile = {
@@ -93,18 +96,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .single();
             
             if (!createError && createdProfile) {
+              console.log('✅ Profile created successfully:', createdProfile);
               setProfile(createdProfile);
+            } else {
+              console.error('❌ Profile creation failed:', createError);
             }
           }
         } else {
           console.warn('Error fetching profile:', error.message);
         }
       } else {
+        console.log('✅ Profile fetched successfully:', data);
         setProfile(data);
       }
     } catch (error) {
       console.warn('Could not fetch/create profile:', error);
     } finally {
+      console.log('🔵 Setting loading to false');
       setLoading(false);
     }
   };
