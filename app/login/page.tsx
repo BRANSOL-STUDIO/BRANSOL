@@ -23,11 +23,16 @@ function LoginForm() {
 
   // Auto-redirect when profile loads after successful login
   useEffect(() => {
+    console.log('🔵 Login useEffect triggered:', { profile, loading, hasProfile: !!profile });
+    
     if (profile && !loading) {
+      console.log('🔵 Profile loaded, checking role:', profile.role);
       // Check if user has a designer role and redirect accordingly
       if (profile.role === 'designer' || profile.role === 'admin') {
+        console.log('🔵 Redirecting to designer portal');
         router.push('/designer');
       } else {
+        console.log('🔵 Redirecting to client dashboard');
         // Check if there's a specific redirect requested
         if (redirectTo === '/designer') {
           // If they were trying to access designer portal but aren't a designer
@@ -45,11 +50,25 @@ function LoginForm() {
     setError('');
     setLoading(true);
 
+    console.log('🔵 Starting login process...');
+
     const { error: signInError } = await signIn(email, password);
 
     if (signInError) {
+      console.error('🔴 Login error:', signInError);
       setError(signInError.message);
       setLoading(false);
+    } else {
+      console.log('✅ Login successful, waiting for profile to load...');
+      
+      // Add a timeout to prevent infinite hanging
+      setTimeout(() => {
+        if (loading) {
+          console.warn('⚠️ Login timeout - redirecting anyway');
+          setLoading(false);
+          router.push('/dashboard'); // Fallback redirect
+        }
+      }, 10000); // 10 second timeout
     }
     // The useEffect above will handle the redirect when profile loads
   };
