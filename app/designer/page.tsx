@@ -77,15 +77,21 @@ export default function DesignerPortal() {
   // Fetch projects
   const fetchProjects = async () => {
     try {
+      console.log('🔍 Fetching projects...');
       const { data, error } = await supabase
         .from('projects')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching projects:', error);
+        throw error;
+      }
+      
+      console.log('📊 Projects data:', data);
       setProjects(data || []);
     } catch (err) {
-      console.error('Error fetching projects:', err);
+      console.error('❌ Error fetching projects:', err);
     }
   };
 
@@ -601,7 +607,7 @@ export default function DesignerPortal() {
                     </div>
                     {/* Debug info */}
                     <div className="text-xs text-gray-400 ml-2">
-                      ID: {project.user_id}
+                      ID: {project.user_id || 'NO_ID'}
                     </div>
                   </div>
 
@@ -699,7 +705,7 @@ export default function DesignerPortal() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Client:</span>
                     <span>{clientProfiles[selectedProject.user_id]?.full_name || 'Unknown'}</span>
-                    <span className="text-xs text-gray-400">(ID: {selectedProject.user_id})</span>
+                    <span className="text-xs text-gray-400">(ID: {selectedProject.user_id || 'NO_ID'})</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Type:</span>
