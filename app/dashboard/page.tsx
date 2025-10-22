@@ -446,7 +446,7 @@ export default function DashboardPage() {
                   <span className="text-xl">🎨</span>
                   <span>Projects</span>
                   <span className="ml-auto bg-purple-100 text-purple-600 text-xs font-bold px-2 py-1 rounded-full">
-                    {userData.projects.length}
+                    {userData.projects.filter(p => p.status !== 'Completed' && p.status !== 'Archived').length}
                   </span>
                 </button>
                 <button
@@ -600,7 +600,7 @@ export default function DashboardPage() {
                         </svg>
                       </div>
                       <div className="text-5xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                        {userData.projects.length}
+                        {userData.projects.filter(p => p.status !== 'Completed' && p.status !== 'Archived').length}
                       </div>
                       <div className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Active Projects</div>
                       <button 
