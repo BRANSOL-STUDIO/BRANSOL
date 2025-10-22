@@ -702,10 +702,9 @@ export default function DesignerPortal() {
               </div>
               </div>
             </div>
-          </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3 order-1 lg:order-2">
+            {/* Main Content */}
+            <div className="lg:col-span-3 order-1 lg:order-2">
             {selectedProject ? (
               <div className="space-y-6">
                 {/* Project Header */}
@@ -920,7 +919,6 @@ export default function DesignerPortal() {
               </div>
             )}
           </div>
-        </div>
         ) : (
           /* Clients View */
           <div className="space-y-6">
