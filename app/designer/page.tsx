@@ -348,9 +348,8 @@ export default function DesignerPortal() {
       
       // Filter by active section
       const matchesSection = activeSection === 'all' || 
-        (activeSection === 'briefing' && project.status === 'Briefing') ||
         (activeSection === 'active' && project.status === 'In Progress') ||
-        (activeSection === 'review' && (project.status === 'Review' || project.status === 'Revision')) ||
+        (activeSection === 'review' && project.status === 'Review') ||
         (activeSection === 'archived' && (project.status === 'Completed' || project.status === 'Archived'));
       
       return matchesSearch && matchesSection;
@@ -376,10 +375,8 @@ export default function DesignerPortal() {
   // Dashboard Statistics
   const dashboardStats = {
     totalProjects: projects.length,
-    briefingProjects: projects.filter(p => p.status === 'Briefing').length,
     activeProjects: projects.filter(p => p.status === 'In Progress').length,
     reviewProjects: projects.filter(p => p.status === 'Review').length,
-    revisionProjects: projects.filter(p => p.status === 'Revision').length,
     completedProjects: projects.filter(p => p.status === 'Completed').length,
     totalClients: Object.keys(clientProfiles).length,
     unreadMessages: messages.filter(m => !m.is_read && m.sender_type === 'user').length,
@@ -497,20 +494,12 @@ export default function DesignerPortal() {
                   <div className="text-xs text-white/70 uppercase tracking-wide">Projects</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-200">{dashboardStats.briefingProjects}</div>
-                  <div className="text-xs text-white/70 uppercase tracking-wide">Briefing</div>
-                </div>
-                <div className="text-center">
                   <div className="text-2xl font-bold text-blue-200">{dashboardStats.activeProjects}</div>
                   <div className="text-xs text-white/70 uppercase tracking-wide">Active</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-yellow-200">{dashboardStats.reviewProjects}</div>
                   <div className="text-xs text-white/70 uppercase tracking-wide">Review</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-200">{dashboardStats.revisionProjects}</div>
-                  <div className="text-xs text-white/70 uppercase tracking-wide">Revision</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-white/90">{dashboardStats.totalClients}</div>
@@ -588,19 +577,6 @@ export default function DesignerPortal() {
                 }`}
               >
                 All Projects ({projects.length})
-              </button>
-              <button
-                onClick={() => setActiveSection('briefing')}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  activeSection === 'briefing'
-                    ? 'bg-white text-purple-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-purple-600" />
-                  In Brief ({projects.filter(p => p.status === 'Briefing').length})
-                </div>
               </button>
               <button
                 onClick={() => setActiveSection('active')}
@@ -724,10 +700,8 @@ export default function DesignerPortal() {
                       className="text-xs px-2 py-1 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <option value="Briefing">Briefing</option>
                       <option value="In Progress">In Progress</option>
                       <option value="Review">Review</option>
-                      <option value="Revision">Revision</option>
                       <option value="Completed">Completed</option>
                       <option value="On Hold">On Hold</option>
                       <option value="Archived">Archived</option>
@@ -832,10 +806,8 @@ export default function DesignerPortal() {
                     onChange={(e) => setNewStatus(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
-                    <option value="Briefing">Briefing</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Review">Review</option>
-                    <option value="Revision">Revision</option>
                     <option value="Completed">Completed</option>
                     <option value="On Hold">On Hold</option>
                     <option value="Archived">Archived</option>
