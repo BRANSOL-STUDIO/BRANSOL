@@ -60,7 +60,6 @@ export default function DesignerPortal() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
-  const [viewMode, setViewMode] = useState<'projects' | 'clients'>('projects');
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [projectFiles, setProjectFiles] = useState<ProjectFile[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
@@ -81,6 +80,57 @@ export default function DesignerPortal() {
     };
     
     return workflowStages[project.status as keyof typeof workflowStages] || 0;
+  };
+
+  // Project Card Component
+  const ProjectCard = ({ project, client, onClick, isSelected }: { 
+    project: Project; 
+    client: ClientProfile | undefined; 
+    onClick: () => void; 
+    isSelected: boolean;
+  }) => {
+    const unreadCount = messages.filter(m => 
+      m.project_id === project.id && !m.is_read && m.sender_type === 'user'
+    ).length;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        onClick={onClick}
+        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${
+          isSelected 
+            ? 'border-purple-500 bg-purple-50 shadow-lg' 
+            : 'border-gray-200 bg-white hover:border-gray-300'
+        }`}
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            {getStatusIcon(project.status)}
+            <h4 className="font-bold text-sm text-gray-900 truncate">{project.name}</h4>
+          </div>
+          {unreadCount > 0 && (
+            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+              {unreadCount}
+            </span>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <p className="text-xs text-gray-600 truncate">{project.type}</p>
+          <p className="text-xs font-medium text-gray-700">{client?.full_name || 'Unknown Client'}</p>
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span>{new Date(project.created_at).toLocaleDateString()}</span>
+            {project.deadline && (
+              <div className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                <span>{new Date(project.deadline).toLocaleDateString()}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
   };
 
   // Check if user is a designer
@@ -467,36 +517,6 @@ export default function DesignerPortal() {
         </div>
       </div>
 
-      {/* Enhanced View Mode Toggle */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="container py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center bg-gray-100 rounded-2xl p-1">
-                <button
-                  onClick={() => setViewMode('projects')}
-                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 ${
-                    viewMode === 'projects'
-                      ? 'bg-white text-purple-600 shadow-lg'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="text-lg">📋</span>
-                  <span>Projects View</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('clients')}
-                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 ${
-                    viewMode === 'clients'
-                      ? 'bg-white text-purple-600 shadow-lg'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="text-lg">👥</span>
-                  <span>Clients View</span>
-                </button>
-              </div>
-            </div>
             
             {/* Enhanced Quick Actions */}
             <div className="flex items-center gap-3">
@@ -573,8 +593,8 @@ export default function DesignerPortal() {
         </div>
       </div>
 
+      {/* Kanban Board */}
       <div className="container py-8">
-        {viewMode === 'projects' && (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Enhanced Projects List */}
             <div className="lg:col-span-1 order-2 lg:order-1">
