@@ -479,6 +479,7 @@ export default function DesignerPortal() {
       
       // Filter by active section
       const matchesSection = activeSection === 'all' || 
+        (activeSection === 'awaiting' && project.status === 'Awaiting Designer') ||
         (activeSection === 'active' && project.status === 'In Progress') ||
         (activeSection === 'review' && project.status === 'Review') ||
         (activeSection === 'archived' && (project.status === 'Completed' || project.status === 'Archived'));
@@ -506,6 +507,7 @@ export default function DesignerPortal() {
   // Dashboard Statistics
   const dashboardStats = {
     totalProjects: projects.length,
+    awaitingProjects: projects.filter(p => p.status === 'Awaiting Designer').length,
     activeProjects: projects.filter(p => p.status === 'In Progress').length,
     reviewProjects: projects.filter(p => p.status === 'Review').length,
     completedProjects: projects.filter(p => p.status === 'Completed').length,
@@ -516,6 +518,8 @@ export default function DesignerPortal() {
   // Get status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case 'Awaiting Designer':
+        return <Clock className="w-4 h-4 text-orange-600" />;
       case 'Briefing':
         return <MessageSquare className="w-4 h-4 text-purple-600" />;
       case 'In Progress':
@@ -625,6 +629,10 @@ export default function DesignerPortal() {
                   <div className="text-xs text-white/70 uppercase tracking-wide">Projects</div>
                 </div>
                 <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-200">{dashboardStats.awaitingProjects}</div>
+                  <div className="text-xs text-white/70 uppercase tracking-wide">Awaiting</div>
+                </div>
+                <div className="text-center">
                   <div className="text-2xl font-bold text-blue-200">{dashboardStats.activeProjects}</div>
                   <div className="text-xs text-white/70 uppercase tracking-wide">Active</div>
                 </div>
@@ -708,6 +716,19 @@ export default function DesignerPortal() {
                 }`}
               >
                 All Projects ({projects.length})
+              </button>
+              <button
+                onClick={() => setActiveSection('awaiting')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                  activeSection === 'awaiting'
+                    ? 'bg-white text-orange-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-orange-600" />
+                  Awaiting Designer ({projects.filter(p => p.status === 'Awaiting Designer').length})
+                </div>
               </button>
               <button
                 onClick={() => setActiveSection('active')}
@@ -831,6 +852,7 @@ export default function DesignerPortal() {
                       className="text-xs px-2 py-1 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
                       onClick={(e) => e.stopPropagation()}
                     >
+                      <option value="Awaiting Designer">Awaiting Designer</option>
                       <option value="In Progress">In Progress</option>
                       <option value="Review">Review</option>
                       <option value="Completed">Completed</option>
@@ -858,7 +880,19 @@ export default function DesignerPortal() {
                   </div>
 
                   {/* Actions */}
-                  <div className="col-span-1 flex items-center justify-center">
+                  <div className="col-span-1 flex items-center justify-center gap-2">
+                    {project.status === 'Awaiting Designer' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateProjectStatus(project.id, 'In Progress');
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-colors"
+                        title="Start Project"
+                      >
+                        Start
+                      </button>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

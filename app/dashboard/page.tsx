@@ -169,13 +169,13 @@ export default function DashboardPage() {
   // Calculate project progress based on workflow stages
   const getProjectProgress = (project: any) => {
     const workflowStages = {
-      'Briefing': 10,      // Initial briefing and requirements gathering
-      'In Progress': 50,   // Active design work
-      'Review': 75,        // Client review phase
-      'Revision': 85,      // Making revisions based on feedback
-      'Completed': 100,   // Project completed
-      'On Hold': 25,      // Project paused
-      'Archived': 100     // Archived projects are considered complete
+      'Awaiting Designer': 25,  // Client created project, waiting for designer to start
+      'In Progress': 50,        // Active design work
+      'Review': 75,            // Client review phase
+      'Revision': 85,          // Making revisions based on feedback
+      'Completed': 100,        // Project completed
+      'On Hold': 25,           // Project paused
+      'Archived': 100          // Archived projects are considered complete
     };
     
     return workflowStages[project.status as keyof typeof workflowStages] || 0;
@@ -834,7 +834,7 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Progress Bar for Active Projects */}
-                        {(project.status === 'Briefing' || project.status === 'In Progress' || project.status === 'Review' || project.status === 'Revision') && (
+                        {(project.status === 'Awaiting Designer' || project.status === 'In Progress' || project.status === 'Review' || project.status === 'Revision') && (
                           <div className="mb-4">
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-xs font-semibold text-gray-600">Project Progress</span>
@@ -995,7 +995,7 @@ export default function DashboardPage() {
                           </div>
 
                           {/* Progress Bar / Status Banner */}
-                          {(project.status === 'Briefing' || project.status === 'In Progress' || project.status === 'Review' || project.status === 'Revision') && (
+                          {(project.status === 'Awaiting Designer' || project.status === 'In Progress' || project.status === 'Review' || project.status === 'Revision') && (
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                               <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm font-semibold">Project Progress</span>
