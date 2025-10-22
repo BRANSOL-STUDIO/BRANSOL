@@ -54,10 +54,13 @@ export default function DashboardNav({ userName, notifications = 0, onTabChange 
 
   const handleLogout = async () => {
     try {
+      console.log('🔄 Starting logout process...');
       await signOut();
+      console.log('✅ Logout successful, redirecting to home...');
       router.push('/');
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error('❌ Error logging out:', error);
+      alert('Failed to logout. Please try again.');
     }
   };
 
