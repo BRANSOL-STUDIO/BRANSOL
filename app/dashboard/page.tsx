@@ -23,6 +23,7 @@ export default function DashboardPage() {
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [completionNotes, setCompletionNotes] = useState('');
+  const [notificationKey, setNotificationKey] = useState(0);
   const [message, setMessage] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [formData, setFormData] = useState({
@@ -150,6 +151,20 @@ export default function DashboardPage() {
     projects: userProjects,
     recentMessages: totalUnreadMessages
   };
+
+  // Debug: Log the actual values being used
+  console.log('🔍 Notification Debug:', {
+    totalUnreadMessages,
+    userDataRecentMessages: userData.recentMessages,
+    supabaseProjectsCount: supabaseProjects.length,
+    activeProjectsCount: supabaseProjects.filter(p => p.status !== 'Completed' && p.status !== 'Archived').length,
+    allProjectStatuses: supabaseProjects.map(p => ({ name: p.name, status: p.status }))
+  });
+
+  // Force re-render of notifications when count changes
+  useEffect(() => {
+    setNotificationKey(prev => prev + 1);
+  }, [totalUnreadMessages]);
 
   const projectTypes = [
     'Logo Design',
@@ -446,7 +461,7 @@ export default function DashboardPage() {
                   <span>Chat</span>
                   {userData.recentMessages > 0 && (
                     <span 
-                      key={`notification-${userData.recentMessages}`}
+                      key={`notification-${notificationKey}-${userData.recentMessages}`}
                       className="ml-auto bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse"
                     >
                       {userData.recentMessages}
@@ -613,7 +628,7 @@ export default function DashboardPage() {
                         </div>
                         {userData.recentMessages > 0 && (
                           <span 
-                            key={`overview-notification-${userData.recentMessages}`}
+                            key={`overview-notification-${notificationKey}-${userData.recentMessages}`}
                             className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-pulse"
                           >
                             {userData.recentMessages} New
