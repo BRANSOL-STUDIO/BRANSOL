@@ -130,10 +130,12 @@ export default function DashboardPage() {
   const userProjects = user ? supabaseProjects : localProjects;
   const setUserProjects = user ? () => {} : setLocalProjects; // Supabase updates handled by hook
 
-  // Calculate total unread messages from Supabase projects
-  const totalUnreadMessages = supabaseProjects.reduce((count, project) => {
-    return count + project.messages.filter(m => !m.is_read && m.sender_type === 'designer').length;
-  }, 0);
+  // Calculate total unread messages from Supabase projects (only active projects)
+  const totalUnreadMessages = supabaseProjects
+    .filter(project => project.status !== 'Completed' && project.status !== 'Archived')
+    .reduce((count, project) => {
+      return count + project.messages.filter(m => !m.is_read && m.sender_type === 'designer').length;
+    }, 0);
 
   const userData = {
     name: profile?.full_name || "Ricardo Beaumont",
@@ -300,6 +302,15 @@ export default function DashboardPage() {
       }
     }
   }, [activeProjectChat, supabaseProjects, markProjectMessagesAsRead]);
+
+  // Clear chat notifications when opening Chat tab by marking designer messages as read across projects
+  useEffect(() => {
+    if (activeTab === 'chat' && supabaseProjects.length > 0) {
+      supabaseProjects.forEach(p => {
+        markProjectMessagesAsRead(p.id);
+      });
+    }
+  }, [activeTab, supabaseProjects, markProjectMessagesAsRead]);
 
   const handleCompleteProject = async () => {
     if (!selectedProject) return;
@@ -745,9 +756,11 @@ export default function DashboardPage() {
                   </motion.button>
                 </div>
 
-                {/* Projects List */}
+                {/* Projects List - show only Active (non-Completed/Archived) */}
                 <div className="space-y-4">
-                  {userData.projects.map((project, index) => (
+                  {supabaseProjects
+                    .filter(project => project.status !== 'Completed' && project.status !== 'Archived')
+                    .map((project, index) => (
                     <motion.div
                       key={project.id}
                       initial={{ opacity: 0, y: 20 }}
@@ -1318,7 +1331,9 @@ export default function DashboardPage() {
 
                 {/* Chat Conversations List */}
                 <div className="grid md:grid-cols-2 lg:grid-cols-1 gap-4">
-                  {supabaseProjects.map((project, index) => {
+                  {supabaseProjects
+                    .filter(project => project.status !== 'Completed' && project.status !== 'Archived')
+                    .map((project, index) => {
                     const unreadCount = project.messages.filter(m => !m.is_read && m.sender_type === 'designer').length;
                     const lastMessage = project.messages[project.messages.length - 1];
                     
@@ -1329,7 +1344,6 @@ export default function DashboardPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: index * 0.1 }}
                         onClick={() => {
-                          setActiveTab('projects');
                           setActiveProjectChat(project.id);
                         }}
                         className="bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 p-6 cursor-pointer group"
