@@ -166,6 +166,21 @@ export default function DashboardPage() {
     setNotificationKey(prev => prev + 1);
   }, [totalUnreadMessages]);
 
+  // Calculate project progress based on workflow stages
+  const getProjectProgress = (project: any) => {
+    const workflowStages = {
+      'Briefing': 10,      // Initial briefing and requirements gathering
+      'In Progress': 50,   // Active design work
+      'Review': 75,        // Client review phase
+      'Revision': 85,      // Making revisions based on feedback
+      'Completed': 100,   // Project completed
+      'On Hold': 25,      // Project paused
+      'Archived': 100     // Archived projects are considered complete
+    };
+    
+    return workflowStages[project.status as keyof typeof workflowStages] || 0;
+  };
+
   const projectTypes = [
     'Logo Design',
     'Brand Guidelines',
@@ -818,19 +833,19 @@ export default function DashboardPage() {
                           </Link>
                         </div>
 
-                        {/* Progress Bar for In Progress Projects */}
-                        {project.status === 'In Progress' && (
+                        {/* Progress Bar for Active Projects */}
+                        {(project.status === 'Briefing' || project.status === 'In Progress' || project.status === 'Review' || project.status === 'Revision') && (
                           <div className="mb-4">
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-xs font-semibold text-gray-600">Project Progress</span>
                               <span className="text-xs font-bold text-purple-600">
-                                {Math.min(100, Math.max(0, (project.hours_used / 10) * 100))}%
+                                {getProjectProgress(project)}%
                               </span>
                             </div>
                             <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
                               <motion.div
                                 initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(100, Math.max(0, (project.hours_used / 10) * 100))}%` }}
+                                animate={{ width: `${getProjectProgress(project)}%` }}
                                 transition={{ duration: 1.5, ease: "easeOut" }}
                                 className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-600 via-blue-500 to-purple-600 rounded-full"
                                 style={{
@@ -980,18 +995,18 @@ export default function DashboardPage() {
                           </div>
 
                           {/* Progress Bar / Status Banner */}
-                          {project.status === 'In Progress' && (
+                          {(project.status === 'Briefing' || project.status === 'In Progress' || project.status === 'Review' || project.status === 'Revision') && (
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                               <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm font-semibold">Project Progress</span>
                                 <span className="text-sm font-bold">
-                                  {Math.min(100, Math.max(0, (project.hours_used / 10) * 100))}%
+                                  {getProjectProgress(project)}%
                                 </span>
                               </div>
                               <div className="relative h-2 bg-white/20 rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
-                                  animate={{ width: `${Math.min(100, Math.max(0, (project.hours_used / 10) * 100))}%` }}
+                                  animate={{ width: `${getProjectProgress(project)}%` }}
                                   transition={{ duration: 1.5, ease: "easeOut" }}
                                   className="absolute top-0 left-0 h-full bg-white rounded-full"
                                 >

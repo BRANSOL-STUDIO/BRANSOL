@@ -159,7 +159,7 @@ export function useProjectChat(userId?: string) {
           {
             user_id: userId,
             ...projectData,
-            status: 'In Progress',
+            status: 'Briefing',
             hours_used: 0,
           },
         ])
