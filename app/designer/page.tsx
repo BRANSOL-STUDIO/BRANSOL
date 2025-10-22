@@ -92,20 +92,27 @@ export default function DesignerPortal() {
   // Fetch client profiles
   const fetchClientProfiles = async () => {
     try {
+      console.log('🔍 Fetching client profiles...');
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email');
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching client profiles:', error);
+        throw error;
+      }
+      
+      console.log('📊 Client profiles data:', data);
       
       const profilesMap = (data || []).reduce((acc, profile) => {
         acc[profile.id] = profile;
         return acc;
       }, {} as Record<string, ClientProfile>);
       
+      console.log('🗺️ Profiles map:', profilesMap);
       setClientProfiles(profilesMap);
     } catch (err) {
-      console.error('Error fetching client profiles:', err);
+      console.error('❌ Error fetching client profiles:', err);
     }
   };
 
@@ -592,6 +599,10 @@ export default function DesignerPortal() {
                         {client?.full_name || 'Unknown Client'}
                       </span>
                     </div>
+                    {/* Debug info */}
+                    <div className="text-xs text-gray-400 ml-2">
+                      ID: {project.user_id}
+                    </div>
                   </div>
 
                   {/* Status */}
@@ -688,6 +699,7 @@ export default function DesignerPortal() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Client:</span>
                     <span>{clientProfiles[selectedProject.user_id]?.full_name || 'Unknown'}</span>
+                    <span className="text-xs text-gray-400">(ID: {selectedProject.user_id})</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Type:</span>
