@@ -25,13 +25,14 @@ function LoginForm() {
   useEffect(() => {
     console.log('🔵 Login useEffect triggered:', { 
       profile: profile ? { id: profile.id, email: profile.email, role: profile.role } : null, 
-      loading, 
+      authLoading, 
+      formLoading: loading,
       hasProfile: !!profile 
     });
     
-    if (profile && !loading) {
+    // Only redirect when we have a profile and auth is not loading
+    if (profile && !authLoading) {
       console.log('🔵 Profile loaded, checking role:', profile.role);
-      console.log('🔵 Profile object:', profile);
       
       // Check if user has a designer role and redirect accordingly
       if (profile.role === 'designer' || profile.role === 'admin') {
@@ -53,7 +54,7 @@ function LoginForm() {
         return; // Exit early to prevent further execution
       }
     }
-  }, [profile, loading, router, redirectTo]);
+  }, [profile, authLoading, router, redirectTo]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,18 +70,9 @@ function LoginForm() {
       setError(signInError.message);
       setLoading(false);
     } else {
-      console.log('✅ Login successful, waiting for profile to load...');
-      
-      // Add a timeout to prevent infinite hanging
-      setTimeout(() => {
-        if (loading) {
-          console.warn('⚠️ Login timeout - redirecting anyway');
-          setLoading(false);
-          router.push('/dashboard'); // Fallback redirect
-        }
-      }, 10000); // 10 second timeout
+      console.log('✅ Login successful, profile will load and redirect automatically');
+      // The useEffect above will handle the redirect when profile loads
     }
-    // The useEffect above will handle the redirect when profile loads
   };
 
   return (
