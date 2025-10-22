@@ -133,9 +133,15 @@ export default function DashboardPage() {
   // Calculate total unread messages from appropriate data source (only active projects)
   const totalUnreadMessages = user ? 
     supabaseProjects
-      .filter(project => project.status !== 'Completed' && project.status !== 'Archived')
+      .filter(project => {
+        const isActive = project.status !== 'Completed' && project.status !== 'Archived';
+        console.log(`🔍 Project ${project.name}: status="${project.status}", isActive=${isActive}`);
+        return isActive;
+      })
       .reduce((count, project) => {
-        return count + project.messages.filter(m => !m.is_read && m.sender_type === 'designer').length;
+        const unreadCount = project.messages.filter(m => !m.is_read && m.sender_type === 'designer').length;
+        console.log(`🔍 Project ${project.name}: ${unreadCount} unread messages`);
+        return count + unreadCount;
       }, 0) :
     0; // No notifications for mock data
 
@@ -145,7 +151,13 @@ export default function DashboardPage() {
     supabaseProjectsCount: supabaseProjects.length,
     activeProjectsCount: supabaseProjects.filter(p => p.status !== 'Completed' && p.status !== 'Archived').length,
     totalUnreadMessages,
-    userProjectsCount: userProjects.length
+    userProjectsCount: userProjects.length,
+    allProjects: supabaseProjects.map(p => ({
+      id: p.id,
+      name: p.name,
+      status: p.status,
+      unreadMessages: p.messages.filter(m => !m.is_read && m.sender_type === 'designer').length
+    }))
   });
 
   const userData = {
