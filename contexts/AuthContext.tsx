@@ -223,15 +223,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('🔄 Starting signOut process...');
       
-      // Sign out from Supabase
-      const { error } = await supabase.auth.signOut();
+      // Check if there's an active session first
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (error) {
-        console.error('❌ Supabase signOut error:', error);
-        throw error;
+      if (session) {
+        // Only call signOut if there's an active session
+        const { error } = await supabase.auth.signOut();
+        
+        if (error) {
+          console.error('❌ Supabase signOut error:', error);
+          // Don't throw error - continue with local cleanup
+        } else {
+          console.log('✅ Supabase session cleared');
+        }
+      } else {
+        console.log('ℹ️ No active session to sign out from');
       }
       
-      // Clear local state immediately
+      // Clear local state regardless of Supabase response
       setUser(null);
       setProfile(null);
       setLoading(false);
@@ -245,7 +254,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
     } catch (error) {
       console.error('❌ Error signing out:', error);
-      throw error;
+      
+      // Even if there's an error, clear local state and redirect
+      setUser(null);
+      setProfile(null);
+      setLoading(false);
+      
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
     }
   };
 
