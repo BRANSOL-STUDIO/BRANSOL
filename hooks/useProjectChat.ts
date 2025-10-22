@@ -185,11 +185,42 @@ export function useProjectChat(userId?: string) {
     }
   };
 
+  const markProjectMessagesAsRead = async (projectId: string) => {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ is_read: true })
+        .eq('project_id', projectId)
+        .eq('sender_type', 'designer'); // Only mark designer messages as read
+
+      if (error) throw error;
+
+      // Update local state
+      setProjects(prev => 
+        prev.map(project => 
+          project.id === projectId 
+            ? {
+                ...project,
+                messages: project.messages.map(msg => 
+                  msg.sender_type === 'designer' 
+                    ? { ...msg, is_read: true } 
+                    : msg
+                )
+              }
+            : project
+        )
+      );
+    } catch (err) {
+      console.error('Error marking project messages as read:', err);
+    }
+  };
+
   return {
     projects,
     loading,
     sendMessage,
     createProject,
+    markProjectMessagesAsRead,
     refetch: fetchProjects,
   };
 }

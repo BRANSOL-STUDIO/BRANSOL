@@ -11,7 +11,7 @@ import { getDaysLeftInMonth, getTotalDaysInMonth, getMonthProgressPercentage, fo
 
 export default function DashboardPage() {
   const { user, profile, updateProfile } = useAuth();
-  const { projects: supabaseProjects, sendMessage: sendSupabaseMessage, createProject: createSupabaseProject, loading: projectsLoading } = useProjectChat(user?.id);
+  const { projects: supabaseProjects, sendMessage: sendSupabaseMessage, createProject: createSupabaseProject, markProjectMessagesAsRead, loading: projectsLoading } = useProjectChat(user?.id);
   
   const [activeTab, setActiveTab] = useState('overview');
   const [showNewProjectForm, setShowNewProjectForm] = useState(false);
@@ -128,6 +128,11 @@ export default function DashboardPage() {
   const userProjects = user ? supabaseProjects : localProjects;
   const setUserProjects = user ? () => {} : setLocalProjects; // Supabase updates handled by hook
 
+  // Calculate total unread messages from Supabase projects
+  const totalUnreadMessages = supabaseProjects.reduce((count, project) => {
+    return count + project.messages.filter(m => !m.is_read && m.sender_type === 'designer').length;
+  }, 0);
+
   const userData = {
     name: profile?.full_name || "Ricardo Beaumont",
     email: profile?.email || "ricardo@beaumont.com",
@@ -137,7 +142,7 @@ export default function DashboardPage() {
     hoursTotal: profile?.hours_total || 10,
     nextBilling: "Nov 8, 2025",
     projects: userProjects,
-    recentMessages: userProjects.reduce((count, p) => count + (p.messages?.filter((m: any) => !m.isRead && !m.is_read).length || 0), 0)
+    recentMessages: totalUnreadMessages
   };
 
   const projectTypes = [
@@ -283,6 +288,16 @@ export default function DashboardPage() {
       }, 300);
     }
   }, [selectedProject]);
+
+  // Mark messages as read when project chat is opened
+  useEffect(() => {
+    if (activeProjectChat && supabaseProjects.length > 0) {
+      const project = supabaseProjects.find(p => p.id === activeProjectChat.toString());
+      if (project) {
+        markProjectMessagesAsRead(project.id);
+      }
+    }
+  }, [activeProjectChat, supabaseProjects, markProjectMessagesAsRead]);
 
   return (
     <>
@@ -1244,8 +1259,8 @@ export default function DashboardPage() {
 
                 {/* Chat Conversations List */}
                 <div className="grid md:grid-cols-2 lg:grid-cols-1 gap-4">
-                  {userData.projects.map((project, index) => {
-                    const unreadCount = project.messages.filter(m => !m.isRead).length;
+                  {supabaseProjects.map((project, index) => {
+                    const unreadCount = project.messages.filter(m => !m.is_read && m.sender_type === 'designer').length;
                     const lastMessage = project.messages[project.messages.length - 1];
                     
                     return (
@@ -1280,10 +1295,10 @@ export default function DashboardPage() {
                               )}
                             </div>
                             <p className="text-sm text-gray-600 truncate mb-2">
-                              <span className="font-semibold">{lastMessage.senderName}:</span> {lastMessage.content}
+                              <span className="font-semibold">{lastMessage.sender_name}:</span> {lastMessage.content}
                             </p>
                             <div className="flex items-center justify-between">
-                              <span className="text-xs text-gray-400">{lastMessage.timestamp}</span>
+                              <span className="text-xs text-gray-400">{new Date(lastMessage.created_at).toLocaleDateString()}</span>
                               <span className={`px-3 py-1 rounded-xl text-xs font-bold ${
                                 project.status === 'Completed' 
                                   ? 'bg-green-100 text-green-700'

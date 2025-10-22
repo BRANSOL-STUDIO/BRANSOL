@@ -86,10 +86,55 @@ export function useMessages(projectId: string | null) {
     }
   };
 
+  const markAsRead = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ is_read: true })
+        .eq('id', messageId);
+
+      if (error) throw error;
+
+      // Update local state
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === messageId ? { ...msg, is_read: true } : msg
+        )
+      );
+    } catch (err) {
+      console.error('Error marking message as read:', err);
+    }
+  };
+
+  const markProjectMessagesAsRead = async (projectId: string) => {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ is_read: true })
+        .eq('project_id', projectId)
+        .eq('sender_type', 'designer'); // Only mark designer messages as read
+
+      if (error) throw error;
+
+      // Update local state
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.project_id === projectId && msg.sender_type === 'designer' 
+            ? { ...msg, is_read: true } 
+            : msg
+        )
+      );
+    } catch (err) {
+      console.error('Error marking project messages as read:', err);
+    }
+  };
+
   return {
     messages,
     loading,
     sendMessage,
+    markAsRead,
+    markProjectMessagesAsRead,
   };
 }
 
