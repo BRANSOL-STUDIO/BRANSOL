@@ -84,9 +84,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               id: userId,
               email: userData.user.email,
               full_name: userData.user.user_metadata?.full_name || null,
-              plan: 'Professional',
-              hours_remaining: 10,
-              hours_total: 10,
             };
             
             const { data: createdProfile, error: createError } = await supabase
@@ -149,37 +146,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user) {
         console.log('🔵 Creating profile for user:', data.user.id);
         
-        // Try to create profile with all fields, fall back to minimal if needed
-        const profilePayload: any = {
-          id: data.user.id,
-          email: data.user.email,
-          full_name: fullName,
-          plan: 'Professional',
-          hours_remaining: 10,
-          hours_total: 10,
-        };
-
-        // Try adding optional fields
-        try {
-          profilePayload.hours_reset_date = new Date().toISOString();
-          profilePayload.billing_day = 1;
-        } catch (e) {
-          console.log('Optional fields not available yet');
-        }
-
+        // Create profile with only basic fields that we know exist
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .insert([profilePayload])
+          .insert([{
+            id: data.user.id,
+            email: data.user.email,
+            full_name: fullName,
+          }])
           .select();
 
         console.log('🔵 Profile creation response:', { profileData, profileError });
 
         if (profileError) {
           console.error('🔴 Profile creation error:', profileError);
-          console.error('🔴 Error details:', JSON.stringify(profileError, null, 2));
+          console.error('🔴 Error code:', profileError.code);
+          console.error('🔴 Error message:', profileError.message);
+          console.error('🔴 Error details:', profileError.details);
           
-          // Try again with minimal fields if first attempt failed
-          if (profileError.code) {
+          // If profile already exists (duplicate key), just continue - it's fine
+          if (profileError.code === '23505') {
+            console.log('ℹ️ Profile already exists, continuing...');
+          } else {
+            // Try again with minimal fields if first attempt failed
             console.log('🔵 Retrying with minimal profile fields...');
             const { data: retryData, error: retryError } = await supabase
               .from('profiles')
@@ -190,12 +179,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }])
               .select();
             
-            if (retryError) {
+            console.log('🔵 Retry response:', { retryData, retryError });
+            
+            if (retryError && retryError.code !== '23505') {
               console.error('🔴 Retry also failed:', retryError);
             } else {
               console.log('✅ Profile created with minimal fields');
             }
           }
+        } else {
+          console.log('✅ Profile created successfully:', profileData);
         }
       }
 
