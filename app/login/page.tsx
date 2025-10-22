@@ -23,14 +23,22 @@ function LoginForm() {
 
   // Auto-redirect when profile loads after successful login
   useEffect(() => {
-    console.log('🔵 Login useEffect triggered:', { profile, loading, hasProfile: !!profile });
+    console.log('🔵 Login useEffect triggered:', { 
+      profile: profile ? { id: profile.id, email: profile.email, role: profile.role } : null, 
+      loading, 
+      hasProfile: !!profile 
+    });
     
     if (profile && !loading) {
       console.log('🔵 Profile loaded, checking role:', profile.role);
+      console.log('🔵 Profile object:', profile);
+      
       // Check if user has a designer role and redirect accordingly
       if (profile.role === 'designer' || profile.role === 'admin') {
         console.log('🔵 Redirecting to designer portal');
+        setLoading(false); // Stop loading state
         router.push('/designer');
+        return; // Exit early to prevent further execution
       } else {
         console.log('🔵 Redirecting to client dashboard');
         // Check if there's a specific redirect requested
@@ -40,7 +48,9 @@ function LoginForm() {
           setLoading(false);
           return;
         }
+        setLoading(false); // Stop loading state
         router.push(redirectTo);
+        return; // Exit early to prevent further execution
       }
     }
   }, [profile, loading, router, redirectTo]);
