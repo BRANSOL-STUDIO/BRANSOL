@@ -60,6 +60,8 @@ export default function DesignerPortal() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
+  const [viewMode, setViewMode] = useState<'projects' | 'clients'>('projects');
+  const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [projectFiles, setProjectFiles] = useState<ProjectFile[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
   const designerName = profile?.full_name || 'Designer';
@@ -253,6 +255,39 @@ export default function DesignerPortal() {
       }
     });
 
+  // Dashboard Statistics
+  const dashboardStats = {
+    totalProjects: projects.length,
+    activeProjects: projects.filter(p => p.status === 'In Progress').length,
+    reviewProjects: projects.filter(p => p.status === 'Review').length,
+    completedProjects: projects.filter(p => p.status === 'Completed').length,
+    totalClients: Object.keys(clientProfiles).length,
+    unreadMessages: messages.filter(m => !m.is_read && m.sender_type === 'user').length,
+  };
+
+  // Group projects by client
+  const projectsByClient = Object.keys(clientProfiles).reduce((acc, clientId) => {
+    const clientProjects = filteredAndSortedProjects.filter(p => p.user_id === clientId);
+    if (clientProjects.length > 0) {
+      acc[clientId] = {
+        client: clientProfiles[clientId],
+        projects: clientProjects,
+        totalProjects: clientProjects.length,
+        activeProjects: clientProjects.filter(p => p.status === 'In Progress').length,
+        unreadMessages: clientProjects.reduce((count, p) => {
+          return count + messages.filter(m => m.project_id === p.id && !m.is_read && m.sender_type === 'user').length;
+        }, 0),
+      };
+    }
+    return acc;
+  }, {} as Record<string, {
+    client: ClientProfile;
+    projects: Project[];
+    totalProjects: number;
+    activeProjects: number;
+    unreadMessages: number;
+  }>);
+
   // Get status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -353,6 +388,35 @@ export default function DesignerPortal() {
                 <p className="text-xs text-gray-500">Manage client projects</p>
               </div>
             </div>
+            
+            {/* Dashboard Stats */}
+            <div className="hidden md:flex items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-gray-900">{dashboardStats.totalProjects}</div>
+                  <div className="text-xs text-gray-500">Projects</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-blue-600">{dashboardStats.activeProjects}</div>
+                  <div className="text-xs text-gray-500">Active</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-yellow-600">{dashboardStats.reviewProjects}</div>
+                  <div className="text-xs text-gray-500">Review</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-gray-600">{dashboardStats.totalClients}</div>
+                  <div className="text-xs text-gray-500">Clients</div>
+                </div>
+                {dashboardStats.unreadMessages > 0 && (
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-red-600">{dashboardStats.unreadMessages}</div>
+                    <div className="text-xs text-gray-500">Unread</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">
                 {profile?.full_name || 'Designer'}
@@ -369,17 +433,84 @@ export default function DesignerPortal() {
         </div>
       </div>
 
+      {/* View Mode Toggle */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="container py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setViewMode('projects')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  viewMode === 'projects'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                📋 Projects View
+              </button>
+              <button
+                onClick={() => setViewMode('clients')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  viewMode === 'clients'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                👥 Clients View
+              </button>
+            </div>
+            
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setStatusFilter('In Progress')}
+                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
+              >
+                Active Only
+              </button>
+              <button
+                onClick={() => setStatusFilter('Review')}
+                className="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full hover:bg-yellow-200 transition-colors"
+              >
+                Review Only
+              </button>
+              <button
+                onClick={() => setStatusFilter('all')}
+                className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
+              >
+                All Projects
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="container py-8">
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Projects List */}
-          <div className="lg:col-span-1">
+        {viewMode === 'projects' ? (
+          <div className="grid lg:grid-cols-4 gap-6">
+            {/* Projects List */}
+            <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 sticky top-24">
               <div className="flex items-center gap-2 mb-4">
                 <Users className="w-5 h-5 text-purple-600" />
-                <h2 className="text-lg font-bold text-gray-900">Client Projects</h2>
+                <h2 className="text-lg font-bold text-gray-900">
+                  {selectedClient ? `${clientProfiles[selectedClient]?.full_name || 'Client'} Projects` : 'Client Projects'}
+                </h2>
                 <span className="ml-auto bg-purple-100 text-purple-600 px-2 py-1 rounded-full text-xs font-bold">
-                  {filteredAndSortedProjects.length}
+                  {selectedClient 
+                    ? filteredAndSortedProjects.filter(p => p.user_id === selectedClient).length
+                    : filteredAndSortedProjects.length
+                  }
                 </span>
+                {selectedClient && (
+                  <button
+                    onClick={() => setSelectedClient(null)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Clear client filter"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
 
               {/* Search and Filter Controls */}
@@ -423,7 +554,10 @@ export default function DesignerPortal() {
               </div>
 
               <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                {filteredAndSortedProjects.map((project) => {
+                {(selectedClient 
+                  ? filteredAndSortedProjects.filter(p => p.user_id === selectedClient)
+                  : filteredAndSortedProjects
+                ).map((project) => {
                   const client = clientProfiles[project.user_id];
                   const unreadCount = messages.filter(m => 
                     m.project_id === project.id && !m.is_read && m.sender_type === 'user'
@@ -720,6 +854,153 @@ export default function DesignerPortal() {
             )}
           </div>
         </div>
+        ) : (
+          /* Clients View */
+          <div className="space-y-6">
+            {/* Clients Overview */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Object.entries(projectsByClient).map(([clientId, clientData], index) => (
+                <motion.div
+                  key={clientId}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                >
+                  {/* Client Header */}
+                  <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center text-white text-lg font-bold">
+                        {clientData.client.full_name?.split(' ').map(n => n[0]).join('') || 'C'}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900">{clientData.client.full_name || 'Unknown Client'}</h3>
+                        <p className="text-sm text-gray-500">{clientData.client.email}</p>
+                      </div>
+                      {clientData.unreadMessages > 0 && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                          {clientData.unreadMessages}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Client Stats */}
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="bg-white rounded-xl p-3">
+                        <div className="text-lg font-bold text-gray-900">{clientData.totalProjects}</div>
+                        <div className="text-xs text-gray-500">Total</div>
+                      </div>
+                      <div className="bg-white rounded-xl p-3">
+                        <div className="text-lg font-bold text-blue-600">{clientData.activeProjects}</div>
+                        <div className="text-xs text-gray-500">Active</div>
+                      </div>
+                      <div className="bg-white rounded-xl p-3">
+                        <div className="text-lg font-bold text-green-600">{clientData.projects.filter(p => p.status === 'Completed').length}</div>
+                        <div className="text-xs text-gray-500">Done</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Client Projects */}
+                  <div className="p-6">
+                    <h4 className="font-semibold text-gray-900 mb-3">Recent Projects</h4>
+                    <div className="space-y-2">
+                      {clientData.projects.slice(0, 3).map((project) => (
+                        <div
+                          key={project.id}
+                          onClick={() => {
+                            setSelectedProject(project);
+                            setNewStatus(project.status);
+                            fetchProjectFiles(project.id);
+                            setViewMode('projects'); // Switch to projects view
+                          }}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer group"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              {getStatusIcon(project.status)}
+                              <span className="font-medium text-sm text-gray-900 group-hover:text-purple-600 transition-colors">
+                                {project.name}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500">{project.type}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              project.status === 'Completed'
+                                ? 'bg-green-100 text-green-700'
+                                : project.status === 'In Progress'
+                                ? 'bg-blue-100 text-blue-700'
+                                : project.status === 'Review'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}>
+                              {project.status}
+                            </span>
+                            {project.deadline && (
+                              <div className="flex items-center gap-1 text-xs text-gray-400">
+                                <Calendar className="w-3 h-3" />
+                                <span>{new Date(project.deadline).toLocaleDateString()}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {clientData.projects.length > 3 && (
+                        <div className="text-center pt-2">
+                          <span className="text-xs text-gray-500">
+                            +{clientData.projects.length - 3} more projects
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Client Actions */}
+                  <div className="p-6 bg-gray-50 border-t border-gray-100">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedClient(clientId);
+                          setViewMode('projects');
+                        }}
+                        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm"
+                      >
+                        View All Projects
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Find the most recent project for this client
+                          const recentProject = clientData.projects.sort((a, b) => 
+                            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                          )[0];
+                          if (recentProject) {
+                            setSelectedProject(recentProject);
+                            setNewStatus(recentProject.status);
+                            fetchProjectFiles(recentProject.id);
+                            setViewMode('projects');
+                          }
+                        }}
+                        className="flex-1 bg-white text-purple-600 hover:bg-purple-50 font-semibold px-4 py-2 rounded-xl transition-colors text-sm border border-purple-200"
+                      >
+                        Start Chat
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Empty State */}
+            {Object.keys(projectsByClient).length === 0 && (
+              <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+                <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-xl font-bold text-gray-900 mb-2">No Clients Yet</h3>
+                <p className="text-gray-600">Client projects will appear here when they're created</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
