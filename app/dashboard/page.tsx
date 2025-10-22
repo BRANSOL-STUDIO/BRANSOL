@@ -130,12 +130,23 @@ export default function DashboardPage() {
   const userProjects = user ? supabaseProjects : localProjects;
   const setUserProjects = user ? () => {} : setLocalProjects; // Supabase updates handled by hook
 
-  // Calculate total unread messages from Supabase projects (only active projects)
-  const totalUnreadMessages = supabaseProjects
-    .filter(project => project.status !== 'Completed' && project.status !== 'Archived')
-    .reduce((count, project) => {
-      return count + project.messages.filter(m => !m.is_read && m.sender_type === 'designer').length;
-    }, 0);
+  // Calculate total unread messages from appropriate data source (only active projects)
+  const totalUnreadMessages = user ? 
+    supabaseProjects
+      .filter(project => project.status !== 'Completed' && project.status !== 'Archived')
+      .reduce((count, project) => {
+        return count + project.messages.filter(m => !m.is_read && m.sender_type === 'designer').length;
+      }, 0) :
+    0; // No notifications for mock data
+
+  // Debug logging
+  console.log('🔍 Dashboard Debug:', {
+    user: user ? 'authenticated' : 'not authenticated',
+    supabaseProjectsCount: supabaseProjects.length,
+    activeProjectsCount: supabaseProjects.filter(p => p.status !== 'Completed' && p.status !== 'Archived').length,
+    totalUnreadMessages,
+    userProjectsCount: userProjects.length
+  });
 
   const userData = {
     name: profile?.full_name || "Ricardo Beaumont",
