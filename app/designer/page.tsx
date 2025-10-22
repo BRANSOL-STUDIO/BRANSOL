@@ -282,6 +282,68 @@ export default function DesignerPortal() {
       const clientProfiles = allProfiles?.filter(p => p.role === 'client' || !p.role);
       console.log('👥 Client profiles found:', clientProfiles);
       
+      // If no client profiles, let's see what we have
+      if (!clientProfiles || clientProfiles.length === 0) {
+        console.log('🔍 No client profiles found. Available profiles:', allProfiles);
+        
+        // For now, let's create a client profile from the designer profile
+        if (allProfiles && allProfiles.length > 0) {
+          const designerProfile = allProfiles[0];
+          console.log('🔄 Creating client profile from designer:', designerProfile);
+          
+          // Create a client profile
+          const { data: newClient, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: projectUserId, // Use the project's user_id
+              email: designerProfile.email,
+              full_name: designerProfile.full_name || 'Test Client',
+              role: 'client'
+            })
+            .select()
+            .single();
+            
+          if (createError) {
+            console.error('❌ Error creating client profile:', createError);
+            // If creation fails, use the designer profile as fallback
+            const fallbackProfile = {
+              id: projectUserId,
+              full_name: designerProfile.full_name || 'Test Client',
+              email: designerProfile.email
+            };
+            
+            setClientProfiles(prev => ({
+              ...prev,
+              [projectUserId]: fallbackProfile
+            }));
+            
+            return fallbackProfile;
+          } else {
+            console.log('✅ Created client profile:', newClient);
+            
+            // Update the project to use the correct user_id
+            const { error: updateError } = await supabase
+              .from('projects')
+              .update({ user_id: newClient.id })
+              .eq('id', selectedProject?.id);
+              
+            if (updateError) {
+              console.error('❌ Error updating project user_id:', updateError);
+            } else {
+              console.log('✅ Updated project user_id to:', newClient.id);
+              fetchProjects();
+            }
+            
+            setClientProfiles(prev => ({
+              ...prev,
+              [projectUserId]: newClient
+            }));
+            
+            return newClient;
+          }
+        }
+      }
+      
       if (clientProfiles && clientProfiles.length > 0) {
         // If we found client profiles, use the first one as a fallback
         const fallbackClient = clientProfiles[0];
