@@ -920,6 +920,7 @@ export default function DesignerPortal() {
             )}
           </div>
         ) : (
+          <>
           <div className="space-y-6">
             {/* Clients Overview */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1064,6 +1065,7 @@ export default function DesignerPortal() {
               </div>
             )}
           </div>
+          </>
         )}
       </div>
     </div>
