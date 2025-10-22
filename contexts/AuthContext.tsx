@@ -149,24 +149,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user) {
         console.log('🔵 Creating profile for user:', data.user.id);
         
-        const { data: profileData, error: profileError } = await supabase.from('profiles').insert([
-          {
-            id: data.user.id,
-            email: data.user.email,
-            full_name: fullName,
-            plan: 'Professional',
-            hours_remaining: 10,
-            hours_total: 10,
-            hours_reset_date: new Date().toISOString(),
-            billing_day: 1,
-          },
-        ]).select();
+        // Try to create profile with all fields, fall back to minimal if needed
+        const profilePayload: any = {
+          id: data.user.id,
+          email: data.user.email,
+          full_name: fullName,
+          plan: 'Professional',
+          hours_remaining: 10,
+          hours_total: 10,
+        };
+
+        // Try adding optional fields
+        try {
+          profilePayload.hours_reset_date = new Date().toISOString();
+          profilePayload.billing_day = 1;
+        } catch (e) {
+          console.log('Optional fields not available yet');
+        }
+
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .insert([profilePayload])
+          .select();
 
         console.log('🔵 Profile creation response:', { profileData, profileError });
 
         if (profileError) {
           console.error('🔴 Profile creation error:', profileError);
-          // Don't fail signup if profile creation fails - profile will be auto-created on login
+          console.error('🔴 Error details:', JSON.stringify(profileError, null, 2));
+          
+          // Try again with minimal fields if first attempt failed
+          if (profileError.code) {
+            console.log('🔵 Retrying with minimal profile fields...');
+            const { data: retryData, error: retryError } = await supabase
+              .from('profiles')
+              .insert([{
+                id: data.user.id,
+                email: data.user.email,
+                full_name: fullName,
+              }])
+              .select();
+            
+            if (retryError) {
+              console.error('🔴 Retry also failed:', retryError);
+            } else {
+              console.log('✅ Profile created with minimal fields');
+            }
+          }
         }
       }
 
