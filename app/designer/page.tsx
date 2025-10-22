@@ -375,111 +375,148 @@ export default function DesignerPortal() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      {/* Enhanced Header */}
+      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white sticky top-0 z-50 shadow-xl">
         <div className="container">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="text-gray-600 hover:text-gray-900">
+          <div className="flex items-center justify-between h-20">
+            <div className="flex items-center gap-6">
+              <Link href="/" className="text-white/80 hover:text-white transition-colors p-2 rounded-xl hover:bg-white/10">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Designer Portal</h1>
-                <p className="text-xs text-gray-500">Manage client projects</p>
+                <h1 className="text-2xl font-bold">Designer Portal</h1>
+                <p className="text-sm text-white/70">Manage client projects & communications</p>
               </div>
             </div>
             
-            {/* Dashboard Stats */}
-            <div className="hidden md:flex items-center gap-6">
-              <div className="flex items-center gap-4">
+            {/* Enhanced Dashboard Stats */}
+            <div className="hidden lg:flex items-center gap-8">
+              <div className="flex items-center gap-6">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-gray-900">{dashboardStats.totalProjects}</div>
-                  <div className="text-xs text-gray-500">Projects</div>
+                  <div className="text-2xl font-bold">{dashboardStats.totalProjects}</div>
+                  <div className="text-xs text-white/70 uppercase tracking-wide">Projects</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-blue-600">{dashboardStats.activeProjects}</div>
-                  <div className="text-xs text-gray-500">Active</div>
+                  <div className="text-2xl font-bold text-blue-200">{dashboardStats.activeProjects}</div>
+                  <div className="text-xs text-white/70 uppercase tracking-wide">Active</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-yellow-600">{dashboardStats.reviewProjects}</div>
-                  <div className="text-xs text-gray-500">Review</div>
+                  <div className="text-2xl font-bold text-yellow-200">{dashboardStats.reviewProjects}</div>
+                  <div className="text-xs text-white/70 uppercase tracking-wide">Review</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-gray-600">{dashboardStats.totalClients}</div>
-                  <div className="text-xs text-gray-500">Clients</div>
+                  <div className="text-2xl font-bold text-white/90">{dashboardStats.totalClients}</div>
+                  <div className="text-xs text-white/70 uppercase tracking-wide">Clients</div>
                 </div>
                 {dashboardStats.unreadMessages > 0 && (
                   <div className="text-center">
-                    <div className="text-lg font-bold text-red-600">{dashboardStats.unreadMessages}</div>
-                    <div className="text-xs text-gray-500">Unread</div>
+                    <div className="text-2xl font-bold text-red-200">{dashboardStats.unreadMessages}</div>
+                    <div className="text-xs text-white/70 uppercase tracking-wide">Unread</div>
                   </div>
                 )}
               </div>
             </div>
 
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                {profile?.full_name || 'Designer'}
-              </span>
+              <div className="hidden md:flex items-center gap-3 bg-white/10 rounded-xl px-4 py-2">
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <span className="text-sm font-bold">
+                    {(profile?.full_name || 'D').split(' ').map(n => n[0]).join('')}
+                  </span>
+                </div>
+                <span className="text-sm font-medium">{profile?.full_name || 'Designer'}</span>
+              </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium"
+                className="flex items-center gap-2 text-white/80 hover:text-white hover:bg-white/10 px-4 py-2 rounded-xl transition-all duration-200 font-medium"
               >
                 <LogOut className="w-4 h-4" />
-                Logout
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* View Mode Toggle */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="container py-4">
+      {/* Enhanced View Mode Toggle */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="container py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setViewMode('projects')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  viewMode === 'projects'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                📋 Projects View
-              </button>
-              <button
-                onClick={() => setViewMode('clients')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  viewMode === 'clients'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                👥 Clients View
-              </button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center bg-gray-100 rounded-2xl p-1">
+                <button
+                  onClick={() => setViewMode('projects')}
+                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 ${
+                    viewMode === 'projects'
+                      ? 'bg-white text-purple-600 shadow-lg'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="text-lg">📋</span>
+                  <span>Projects View</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('clients')}
+                  className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 ${
+                    viewMode === 'clients'
+                      ? 'bg-white text-purple-600 shadow-lg'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="text-lg">👥</span>
+                  <span>Clients View</span>
+                </button>
+              </div>
             </div>
             
-            {/* Quick Actions */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setStatusFilter('In Progress')}
-                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
-              >
-                Active Only
-              </button>
-              <button
-                onClick={() => setStatusFilter('Review')}
-                className="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full hover:bg-yellow-200 transition-colors"
-              >
-                Review Only
-              </button>
-              <button
-                onClick={() => setStatusFilter('all')}
-                className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
-              >
-                All Projects
-              </button>
+            {/* Enhanced Quick Actions */}
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-600">Quick Filter:</span>
+                <button
+                  onClick={() => setStatusFilter('In Progress')}
+                  className={`px-4 py-2 text-sm rounded-xl font-medium transition-all duration-200 ${
+                    statusFilter === 'In Progress'
+                      ? 'bg-blue-100 text-blue-700 border-2 border-blue-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                  }`}
+                >
+                  🔵 Active Only
+                </button>
+                <button
+                  onClick={() => setStatusFilter('Review')}
+                  className={`px-4 py-2 text-sm rounded-xl font-medium transition-all duration-200 ${
+                    statusFilter === 'Review'
+                      ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-yellow-50 hover:text-yellow-600'
+                  }`}
+                >
+                  🟡 Review Only
+                </button>
+                <button
+                  onClick={() => setStatusFilter('all')}
+                  className={`px-4 py-2 text-sm rounded-xl font-medium transition-all duration-200 ${
+                    statusFilter === 'all'
+                      ? 'bg-gray-200 text-gray-800 border-2 border-gray-300'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  ⚪ All Projects
+                </button>
+              </div>
+              
+              {/* Mobile Quick Actions */}
+              <div className="md:hidden">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                >
+                  <option value="all">All Projects</option>
+                  <option value="In Progress">Active Only</option>
+                  <option value="Review">Review Only</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -488,62 +525,71 @@ export default function DesignerPortal() {
       <div className="container py-8">
         {viewMode === 'projects' ? (
           <div className="grid lg:grid-cols-4 gap-6">
-            {/* Projects List */}
+            {/* Enhanced Projects List */}
             <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 sticky top-24">
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="w-5 h-5 text-purple-600" />
-                <h2 className="text-lg font-bold text-gray-900">
-                  {selectedClient ? `${clientProfiles[selectedClient]?.full_name || 'Client'} Projects` : 'Client Projects'}
-                </h2>
-                <span className="ml-auto bg-purple-100 text-purple-600 px-2 py-1 rounded-full text-xs font-bold">
-                  {selectedClient 
-                    ? filteredAndSortedProjects.filter(p => p.user_id === selectedClient).length
-                    : filteredAndSortedProjects.length
-                  }
-                </span>
-                {selectedClient && (
-                  <button
-                    onClick={() => setSelectedClient(null)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Clear client filter"
-                  >
-                    ✕
-                  </button>
-                )}
+            <div className="bg-white rounded-3xl border border-gray-200 shadow-xl p-6 sticky top-32">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center">
+                  <Users className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {selectedClient ? `${clientProfiles[selectedClient]?.full_name || 'Client'} Projects` : 'Client Projects'}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {selectedClient ? 'Filtered by client' : 'All active projects'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 px-3 py-1 rounded-full text-sm font-bold">
+                    {selectedClient 
+                      ? filteredAndSortedProjects.filter(p => p.user_id === selectedClient).length
+                      : filteredAndSortedProjects.length
+                    }
+                  </span>
+                  {selectedClient && (
+                    <button
+                      onClick={() => setSelectedClient(null)}
+                      className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-700 transition-all duration-200"
+                      title="Clear client filter"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* Search and Filter Controls */}
-              <div className="space-y-3 mb-4">
+              {/* Enhanced Search and Filter Controls */}
+              <div className="space-y-4 mb-6">
                 <div className="relative">
-                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     placeholder="Search projects, clients..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-200"
                   />
                 </div>
                 
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="px-4 py-3 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-200"
                   >
-                             <option value="all">All Status</option>
-                             <option value="In Progress">In Progress</option>
-                             <option value="Review">Review</option>
-                             <option value="Completed">Completed</option>
-                             <option value="On Hold">On Hold</option>
-                             <option value="Archived">Archived</option>
+                    <option value="all">All Status</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Review">Review</option>
+                    <option value="Completed">Completed</option>
+                    <option value="On Hold">On Hold</option>
+                    <option value="Archived">Archived</option>
                   </select>
                   
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="px-4 py-3 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-200"
                   >
                     <option value="recent">Recent</option>
                     <option value="name">Name</option>
@@ -564,70 +610,90 @@ export default function DesignerPortal() {
                   ).length;
 
                   return (
-                    <button
+                    <motion.button
                       key={project.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3 }}
                       onClick={() => {
                         setSelectedProject(project);
                         setNewStatus(project.status);
                         fetchProjectFiles(project.id);
                       }}
-                      className={`w-full text-left p-4 rounded-xl transition-all border ${
+                      className={`w-full text-left p-5 rounded-2xl transition-all duration-300 border-2 ${
                         selectedProject?.id === project.id
-                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white border-purple-600'
-                          : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border-gray-200 hover:border-gray-300'
+                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white border-purple-600 shadow-xl transform scale-[1.02]'
+                          : 'bg-white hover:bg-gray-50 text-gray-900 border-gray-200 hover:border-purple-200 hover:shadow-lg'
                       }`}
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(project.status)}
-                          <h3 className="font-semibold text-sm">{project.name}</h3>
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                            selectedProject?.id === project.id ? 'bg-white/20' : 'bg-gray-100'
+                          }`}>
+                            {getStatusIcon(project.status)}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className={`font-bold text-sm mb-1 ${
+                              selectedProject?.id === project.id ? 'text-white' : 'text-gray-900'
+                            }`}>
+                              {project.name}
+                            </h3>
+                            <p className={`text-xs ${
+                              selectedProject?.id === project.id ? 'text-purple-100' : 'text-gray-500'
+                            }`}>
+                              {project.type}
+                            </p>
+                          </div>
                         </div>
                         {unreadCount > 0 && selectedProject?.id !== project.id && (
-                          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
                             {unreadCount}
                           </span>
                         )}
                       </div>
                       
-                      <div className="space-y-1">
-                        <p className={`text-sm font-medium ${selectedProject?.id === project.id ? 'text-purple-100' : 'text-gray-700'}`}>
-                          {client?.full_name || 'Unknown Client'}
-                        </p>
-                        <p className={`text-xs ${selectedProject?.id === project.id ? 'text-purple-100' : 'text-gray-500'}`}>
-                          {project.type}
-                        </p>
-                        <p className={`text-xs ${selectedProject?.id === project.id ? 'text-purple-100' : 'text-gray-400'}`}>
-                          {new Date(project.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      
-                      <div className="flex items-center justify-between mt-3">
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                          selectedProject?.id === project.id 
-                            ? 'bg-white/20 text-white' 
-                            : project.status === 'Completed'
-                            ? 'bg-green-100 text-green-700'
-                            : project.status === 'In Progress'
-                            ? 'bg-blue-100 text-blue-700'
-                            : project.status === 'Review'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : project.status === 'Archived'
-                            ? 'bg-gray-100 text-gray-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}>
-                          {project.status}
-                        </span>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className={`text-sm font-medium ${
+                            selectedProject?.id === project.id ? 'text-purple-100' : 'text-gray-700'
+                          }`}>
+                            {client?.full_name || 'Unknown Client'}
+                          </p>
+                          <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
+                            selectedProject?.id === project.id 
+                              ? 'bg-white/20 text-white' 
+                              : project.status === 'Completed'
+                              ? 'bg-green-100 text-green-700'
+                              : project.status === 'In Progress'
+                              ? 'bg-blue-100 text-blue-700'
+                              : project.status === 'Review'
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : project.status === 'Archived'
+                              ? 'bg-gray-100 text-gray-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}>
+                            {project.status}
+                          </span>
+                        </div>
                         
-                        {project.deadline && (
-                          <div className={`flex items-center gap-1 text-xs ${
+                        <div className="flex items-center justify-between text-xs">
+                          <p className={`${
                             selectedProject?.id === project.id ? 'text-purple-100' : 'text-gray-400'
                           }`}>
-                            <Calendar className="w-3 h-3" />
-                            <span>{new Date(project.deadline).toLocaleDateString()}</span>
-                          </div>
-                        )}
+                            {new Date(project.created_at).toLocaleDateString()}
+                          </p>
+                          {project.deadline && (
+                            <div className={`flex items-center gap-1 ${
+                              selectedProject?.id === project.id ? 'text-purple-100' : 'text-gray-400'
+                            }`}>
+                              <Calendar className="w-3 h-3" />
+                              <span>{new Date(project.deadline).toLocaleDateString()}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </button>
+                    </motion.button>
                   );
                 })}
                 {projects.length === 0 && (
