@@ -220,11 +220,35 @@ export default function DesignerPortal() {
     }
   };
 
-  // Load data on mount
-  useEffect(() => {
-    fetchProjects();
-    fetchClientProfiles();
-  }, []);
+  // Fetch specific client profile if not found
+  const fetchSpecificClientProfile = async (userId: string) => {
+    try {
+      console.log('🔍 Fetching specific client profile for:', userId);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('❌ Error fetching specific client profile:', error);
+        return null;
+      }
+      
+      console.log('📊 Specific client profile data:', data);
+      
+      // Add to clientProfiles map
+      setClientProfiles(prev => ({
+        ...prev,
+        [userId]: data
+      }));
+      
+      return data;
+    } catch (err) {
+      console.error('❌ Error fetching specific client profile:', err);
+      return null;
+    }
+  };
 
   // Load messages when project is selected
   useEffect(() => {
@@ -232,6 +256,12 @@ export default function DesignerPortal() {
       fetchMessages(selectedProject.id);
       fetchProjectFiles(selectedProject.id);
       setNewStatus(selectedProject.status);
+      
+      // Fetch client profile if not found
+      if (!clientProfiles[selectedProject.user_id]) {
+        console.log('🔍 Client profile not found, fetching specific profile...');
+        fetchSpecificClientProfile(selectedProject.user_id);
+      }
     }
   }, [selectedProject]);
 
@@ -706,6 +736,9 @@ export default function DesignerPortal() {
                     <span className="font-medium">Client:</span>
                     <span>{clientProfiles[selectedProject.user_id]?.full_name || 'Unknown'}</span>
                     <span className="text-xs text-gray-400">(ID: {selectedProject.user_id || 'NO_ID'})</span>
+                    <div className="text-xs text-gray-400">
+                      Profiles loaded: {Object.keys(clientProfiles).length}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Type:</span>
