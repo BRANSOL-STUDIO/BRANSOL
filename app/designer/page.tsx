@@ -1029,12 +1029,12 @@ export default function DesignerPortal() {
                 <p className="text-gray-600 mb-3">{selectedProject.description}</p>
                 <div className="space-y-2 text-sm text-gray-500">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">Client:</span>
-                    <span>{clientProfiles[selectedProject.user_id]?.full_name || 'Unknown'}</span>
+                    <span className="font-bold">Client:</span>
+                    <span className="font-bold">{clientProfiles[selectedProject.user_id]?.full_name || 'Unknown'}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">Type:</span>
-                    <span>{selectedProject.type}</span>
+                    <span className="font-bold">Type:</span>
+                    <span className="font-bold">{selectedProject.type}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Created:</span>
