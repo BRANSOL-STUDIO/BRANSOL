@@ -1032,246 +1032,161 @@ export default function DesignerPortal() {
         </div>
       </div>
 
-      {/* Enhanced Project Detail Sidebar */}
+      {/* Project Detail Sidebar */}
       {selectedProject && (
-        <motion.div 
-          initial={{ x: 400, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: 400, opacity: 0 }}
-          transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="fixed inset-y-0 right-0 w-96 bg-gradient-to-b from-white to-gray-50 shadow-2xl border-l border-gray-200 z-50 overflow-y-auto"
-        >
+        <div className="fixed inset-y-0 right-0 w-96 bg-white shadow-2xl border-l border-gray-200 z-50 overflow-y-auto">
           <div className="p-8">
-            {/* Enhanced Header */}
             <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
-                  {getStatusIcon(selectedProject.status)}
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Project Details</h2>
-                  <p className="text-sm text-gray-500">Manage project workflow</p>
-                </div>
-              </div>
+              <h2 className="text-2xl font-semibold text-gray-900">Project Details</h2>
               <button
                 onClick={() => setSelectedProject(null)}
-                className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Enhanced Project Info */}
             <div className="mb-8">
-              <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-6 border border-purple-100 shadow-sm">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{selectedProject.name}</h3>
-                <p className="text-gray-600 mb-4 leading-relaxed">{selectedProject.description}</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">{selectedProject.name}</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">{selectedProject.description}</p>
+              
+              <div className="space-y-4">
+                <div className="border-b border-gray-100 pb-4">
+                  <span className="text-sm text-gray-500 uppercase tracking-wide font-medium">Client</span>
+                  <div className="text-lg font-semibold text-gray-900 mt-1">{clientProfiles[selectedProject.user_id]?.full_name || 'Unknown'}</div>
+                </div>
                 
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-white/60 rounded-xl">
-                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                      <Users className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <span className="text-sm text-gray-500 font-medium">Client</span>
-                      <div className="font-bold text-gray-900">{clientProfiles[selectedProject.user_id]?.full_name || 'Unknown'}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 p-3 bg-white/60 rounded-xl">
-                    <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <span className="text-sm text-gray-500 font-medium">Type</span>
-                      <div className="font-bold text-gray-900">{selectedProject.type}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 p-3 bg-white/60 rounded-xl">
-                    <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center">
-                      <Calendar className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <span className="text-sm text-gray-500 font-medium">Created</span>
-                      <div className="font-bold text-gray-900">{new Date(selectedProject.created_at).toLocaleDateString()}</div>
-                    </div>
-                  </div>
+                <div className="border-b border-gray-100 pb-4">
+                  <span className="text-sm text-gray-500 uppercase tracking-wide font-medium">Type</span>
+                  <div className="text-lg font-semibold text-gray-900 mt-1">{selectedProject.type}</div>
+                </div>
+                
+                <div className="border-b border-gray-100 pb-4">
+                  <span className="text-sm text-gray-500 uppercase tracking-wide font-medium">Created</span>
+                  <div className="text-lg font-semibold text-gray-900 mt-1">{new Date(selectedProject.created_at).toLocaleDateString()}</div>
                 </div>
               </div>
             </div>
 
-              {/* Enhanced Status Update */}
-              <div className="mb-8">
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                      <AlertCircle className="w-4 h-4 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900">Update Status</h3>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <select
-                      value={newStatus}
-                      onChange={(e) => setNewStatus(e.target.value)}
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white shadow-sm font-medium"
-                    >
-                      <option value="Awaiting Designer">Awaiting Designer</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Review">Review</option>
-                      <option value="Completed">Completed</option>
-                      <option value="On Hold">On Hold</option>
-                      <option value="Archived">Archived</option>
-                    </select>
-                    {newStatus !== selectedProject.status && (
-                      <button
-                        onClick={() => updateProjectStatus(selectedProject.id, newStatus)}
-                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg"
-                      >
-                        Update
-                      </button>
-                    )}
-                  </div>
-                </div>
+            <div className="mb-8">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Update Status</h4>
+              <div className="flex gap-3">
+                <select
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value)}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                >
+                  <option value="Awaiting Designer">Awaiting Designer</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Review">Review</option>
+                  <option value="Completed">Completed</option>
+                  <option value="On Hold">On Hold</option>
+                  <option value="Archived">Archived</option>
+                </select>
+                {newStatus !== selectedProject.status && (
+                  <button
+                    onClick={() => updateProjectStatus(selectedProject.id, newStatus)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold text-sm transition-colors"
+                  >
+                    Update
+                  </button>
+                )}
               </div>
+            </div>
 
-              {/* Enhanced Quick Chat */}
-              <div className="mb-8">
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-100">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                      <MessageSquare className="w-4 h-4 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900">Quick Message</h3>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                      placeholder="Type your message to the client..."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white shadow-sm font-medium"
-                    />
-                    <button
-                      onClick={sendMessage}
-                      disabled={!newMessage.trim()}
-                      className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-200 hover:scale-105 shadow-lg"
-                    >
-                      <Send className="w-4 h-4" />
-                      Send Message
-                    </button>
-                  </div>
-                </div>
+            <div className="mb-8">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Send Message</h4>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  placeholder="Type your message to the client..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim()}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Send Message
+                </button>
               </div>
+            </div>
 
-              {/* Enhanced Recent Messages */}
-              <div className="mb-8">
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
-                      <Clock className="w-4 h-4 text-white" />
+            <div className="mb-8">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Recent Messages</h4>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {messages.slice(-5).map((msg) => (
+                  <div key={msg.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-gray-700">{msg.sender_name}</span>
+                      <span className="text-xs text-gray-400">
+                        {new Date(msg.created_at).toLocaleTimeString('en-US', { 
+                          hour: 'numeric', 
+                          minute: '2-digit',
+                          hour12: true 
+                        })}
+                      </span>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Recent Messages</h3>
+                    <p className="text-sm text-gray-600">{msg.content}</p>
                   </div>
-                  
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {messages.slice(-5).map((msg) => (
-                    <div key={msg.id} className="p-4 bg-white/80 rounded-xl border border-white/50 shadow-sm hover:shadow-md transition-all duration-200">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          msg.sender_type === 'designer' 
-                            ? 'bg-gradient-to-br from-purple-500 to-blue-500 text-white' 
-                            : 'bg-gradient-to-br from-green-500 to-emerald-500 text-white'
-                        }`}>
-                          {msg.sender_name?.charAt(0) || 'U'}
-                        </div>
-                        <span className="text-sm font-semibold text-gray-700">{msg.sender_name}</span>
-                        <span className="text-xs text-gray-400 ml-auto">
-                          {new Date(msg.created_at).toLocaleTimeString('en-US', { 
-                            hour: 'numeric', 
-                            minute: '2-digit',
-                            hour12: true 
-                          })}
-                        </span>
+                ))}
+                {messages.length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-8">No messages yet</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Project Files</h4>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {loadingFiles ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-500">Loading files...</p>
+                  </div>
+                ) : projectFiles.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-8">No files uploaded yet</p>
+                ) : (
+                  projectFiles.map((file) => (
+                    <div key={file.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {file.file_name}
+                        </p>
+                        <p className="text-xs text-gray-500">{formatFileSize(file.file_size)}</p>
                       </div>
-                      <p className="text-sm text-gray-600 leading-relaxed">{msg.content}</p>
-                    </div>
-                  ))}
-                  {messages.length === 0 && (
-                    <p className="text-sm text-gray-500 text-center py-4">No messages yet</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Enhanced Project Files */}
-              <div>
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                      <FolderOpen className="w-4 h-4 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900">Project Files</h3>
-                  </div>
-                  
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {loadingFiles ? (
-                    <div className="text-center py-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto mb-2"></div>
-                      <p className="text-xs text-gray-500">Loading files...</p>
-                    </div>
-                  ) : projectFiles.length === 0 ? (
-                    <p className="text-sm text-gray-500 text-center py-4">No files uploaded yet</p>
-                  ) : (
-                    projectFiles.map((file) => (
-                      <div key={file.id} className="flex items-center justify-between p-4 bg-white/80 rounded-xl border border-white/50 shadow-sm hover:shadow-md transition-all duration-200">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
-                            {getFileIcon(file.file_name)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">
-                              {file.file_name}
-                            </p>
-                            <p className="text-xs text-gray-500 font-medium">{formatFileSize(file.file_size)}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 ml-4">
+                        <button
+                          onClick={() => handleFileDownload(file)}
+                          className="px-3 py-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                        >
+                          Download
+                        </button>
+                        {file.file_url && (
                           <button
-                            onClick={() => handleFileDownload(file)}
-                            className="p-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                            title="Download"
+                            onClick={() => window.open(file.file_url!, '_blank')}
+                            className="px-3 py-1 text-xs text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
                           >
-                            <Download className="w-4 h-4" />
+                            View
                           </button>
-                          {file.file_url && (
-                            <button
-                              onClick={() => window.open(file.file_url!, '_blank')}
-                              className="p-1 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
-                              title="View"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleFileDelete(file.id)}
-                            className="p-1 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        )}
+                        <button
+                          onClick={() => handleFileDelete(file.id)}
+                          className="px-3 py-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                        >
+                          Delete
+                        </button>
                       </div>
-                    ))
-                  )}
-                  </div>
-                </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );
