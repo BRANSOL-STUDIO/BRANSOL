@@ -1030,6 +1030,7 @@ export default function DesignerPortal() {
             )}
           </div>
         </div>
+      </div>
 
         {/* Enhanced Project Detail Sidebar */}
         {selectedProject && (
