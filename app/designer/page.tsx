@@ -90,6 +90,21 @@ export default function DesignerPortal() {
       
       console.log('📊 Projects data:', data);
       console.log('📊 Project user_ids:', data?.map(p => ({ id: p.id, name: p.name, user_id: p.user_id })));
+      
+      // Check if any project user_ids exist in profiles
+      if (data && data.length > 0) {
+        const projectUserIds = data.map(p => p.user_id);
+        console.log('🔍 Project user IDs:', projectUserIds);
+        
+        // Check if these user_ids exist in profiles
+        const { data: profileCheck } = await supabase
+          .from('profiles')
+          .select('id, full_name, role')
+          .in('id', projectUserIds);
+          
+        console.log('🔍 Profiles for project user_ids:', profileCheck);
+      }
+      
       setProjects(data || []);
     } catch (err) {
       console.error('❌ Error fetching projects:', err);
@@ -101,6 +116,17 @@ export default function DesignerPortal() {
     try {
       console.log('🔍 Fetching client profiles...');
       console.log('🔍 Current user:', user?.id, 'Current profile role:', profile?.role);
+      
+      // First, let's see ALL profiles in the database
+      const { data: allProfiles, error: allError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, role');
+        
+      if (allError) {
+        console.error('❌ Error fetching all profiles:', allError);
+      } else {
+        console.log('📊 ALL profiles in database:', allProfiles);
+      }
       
       // For designers, try to fetch all profiles
       const { data, error } = await supabase
