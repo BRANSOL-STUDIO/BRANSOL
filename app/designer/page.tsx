@@ -694,8 +694,10 @@ export default function DesignerPortal() {
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-2xl font-bold">Designer Portal</h1>
-                <p className="text-sm text-white/70">Project Management List</p>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent mb-1">
+                  Designer Portal
+                </h1>
+                <p className="text-lg text-white/80 font-medium">Project Management Dashboard</p>
               </div>
             </div>
             
@@ -861,17 +863,35 @@ export default function DesignerPortal() {
 
       {/* Asana-style List View */}
       <div className="container py-8">
-        {/* Projects List Table */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-          {/* Table Header */}
-          <div className="bg-gray-50 border-b border-gray-200 px-6 py-4">
-            <div className="grid grid-cols-12 gap-4 text-sm font-semibold text-gray-600">
-              <div className="col-span-4">Project</div>
-              <div className="col-span-2">Client</div>
-              <div className="col-span-2">Status</div>
-              <div className="col-span-2">Created</div>
-              <div className="col-span-1">Messages</div>
-              <div className="col-span-1">Actions</div>
+        {/* Modern Projects List */}
+        <div className="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden backdrop-blur-sm">
+          {/* Enhanced Table Header */}
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 px-8 py-6">
+            <div className="grid grid-cols-12 gap-6 text-sm font-bold text-gray-700 uppercase tracking-wide">
+              <div className="col-span-4 flex items-center gap-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                Project
+              </div>
+              <div className="col-span-2 flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                Client
+              </div>
+              <div className="col-span-2 flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                Status
+              </div>
+              <div className="col-span-2 flex items-center gap-2">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                Created
+              </div>
+              <div className="col-span-1 flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                Messages
+              </div>
+              <div className="col-span-1 flex items-center gap-2">
+                <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                Actions
+              </div>
             </div>
           </div>
 
@@ -888,8 +908,11 @@ export default function DesignerPortal() {
                   key={project.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                    selectedProject?.id === project.id ? 'bg-purple-50 border-l-4 border-purple-500' : ''
+                  whileHover={{ scale: 1.01, backgroundColor: '#f8fafc' }}
+                  className={`grid grid-cols-12 gap-6 px-8 py-6 transition-all duration-300 cursor-pointer group ${
+                    selectedProject?.id === project.id 
+                      ? 'bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 shadow-lg' 
+                      : 'hover:shadow-md hover:bg-gray-50/50'
                   }`}
                   onClick={() => {
                     setSelectedProject(project);
@@ -897,16 +920,16 @@ export default function DesignerPortal() {
                     fetchProjectFiles(project.id);
                   }}
                 >
-                  {/* Project Info */}
-                  <div className="col-span-4 flex items-center gap-3">
-                    <div className="flex-shrink-0">
+                  {/* Enhanced Project Info */}
+                  <div className="col-span-4 flex items-center gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-100 to-blue-100 rounded-xl flex items-center justify-center shadow-sm">
                       {getStatusIcon(project.status)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-gray-900 truncate">
+                      <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-purple-600 transition-colors">
                         {project.name}
                       </h3>
-                      <p className="text-xs text-gray-500 truncate">{project.type}</p>
+                      <p className="text-sm text-gray-500 truncate mt-1">{project.type}</p>
                     </div>
                   </div>
 
