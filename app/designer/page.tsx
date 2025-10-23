@@ -694,46 +694,39 @@ export default function DesignerPortal() {
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent mb-1">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent mb-1">
                   Designer Portal
                 </h1>
-                <p className="text-lg text-white/80 font-medium">Project Management Dashboard</p>
+                <p className="text-base text-white/80 font-medium">Project Management Dashboard</p>
               </div>
             </div>
             
             {/* Dashboard Stats */}
             <div className="hidden lg:flex items-center gap-8">
-              <button
-                onClick={createMissingClientProfiles}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                title="Create missing client profiles"
-              >
-                Fix Client Names
-              </button>
               <div className="flex items-center gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{dashboardStats.totalProjects}</div>
+                  <div className="text-xl font-bold">{dashboardStats.totalProjects}</div>
                   <div className="text-xs text-white/70 uppercase tracking-wide">Projects</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-200">{dashboardStats.awaitingProjects}</div>
+                  <div className="text-xl font-bold text-orange-200">{dashboardStats.awaitingProjects}</div>
                   <div className="text-xs text-white/70 uppercase tracking-wide">Awaiting</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-200">{dashboardStats.activeProjects}</div>
+                  <div className="text-xl font-bold text-blue-200">{dashboardStats.activeProjects}</div>
                   <div className="text-xs text-white/70 uppercase tracking-wide">Active</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-200">{dashboardStats.reviewProjects}</div>
+                  <div className="text-xl font-bold text-yellow-200">{dashboardStats.reviewProjects}</div>
                   <div className="text-xs text-white/70 uppercase tracking-wide">Review</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-white/90">{dashboardStats.totalClients}</div>
+                  <div className="text-xl font-bold text-white/90">{dashboardStats.totalClients}</div>
                   <div className="text-xs text-white/70 uppercase tracking-wide">Clients</div>
                 </div>
                 {dashboardStats.unreadMessages > 0 && (
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-red-200">{dashboardStats.unreadMessages}</div>
+                    <div className="text-xl font-bold text-red-200">{dashboardStats.unreadMessages}</div>
                     <div className="text-xs text-white/70 uppercase tracking-wide">Unread</div>
                   </div>
                 )}
@@ -1032,8 +1025,8 @@ export default function DesignerPortal() {
       {selectedProject && (
         <div className="fixed inset-y-0 right-0 w-96 bg-white shadow-2xl border-l border-gray-200 z-50 overflow-y-auto">
           <div className="p-8">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900">Project Details</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Project Details</h2>
               <button
                 onClick={() => setSelectedProject(null)}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -1042,30 +1035,30 @@ export default function DesignerPortal() {
               </button>
             </div>
 
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">{selectedProject.name}</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">{selectedProject.description}</p>
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">{selectedProject.name}</h3>
+              <p className="text-gray-600 mb-4 leading-relaxed">{selectedProject.description}</p>
               
               <div className="space-y-4">
                 <div className="border-b border-gray-100 pb-4">
                   <span className="text-sm text-gray-500 uppercase tracking-wide font-medium">Client</span>
-                  <div className="text-lg font-semibold text-gray-900 mt-1">{clientProfiles[selectedProject.user_id]?.full_name || 'Unknown'}</div>
+                  <div className="text-base font-semibold text-gray-900 mt-1">{clientProfiles[selectedProject.user_id]?.full_name || 'Unknown'}</div>
                 </div>
                 
                 <div className="border-b border-gray-100 pb-4">
                   <span className="text-sm text-gray-500 uppercase tracking-wide font-medium">Type</span>
-                  <div className="text-lg font-semibold text-gray-900 mt-1">{selectedProject.type}</div>
+                  <div className="text-base font-semibold text-gray-900 mt-1">{selectedProject.type}</div>
                 </div>
                 
                 <div className="border-b border-gray-100 pb-4">
                   <span className="text-sm text-gray-500 uppercase tracking-wide font-medium">Created</span>
-                  <div className="text-lg font-semibold text-gray-900 mt-1">{new Date(selectedProject.created_at).toLocaleDateString()}</div>
+                  <div className="text-base font-semibold text-gray-900 mt-1">{new Date(selectedProject.created_at).toLocaleDateString()}</div>
                 </div>
               </div>
             </div>
 
-            <div className="mb-8">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Update Status</h4>
+            <div className="mb-6">
+              <h4 className="text-base font-semibold text-gray-900 mb-3">Update Status</h4>
               <div className="flex gap-3">
                 <select
                   value={newStatus}
@@ -1090,8 +1083,8 @@ export default function DesignerPortal() {
               </div>
             </div>
 
-            <div className="mb-8">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Send Message</h4>
+            <div className="mb-6">
+              <h4 className="text-base font-semibold text-gray-900 mb-3">Send Message</h4>
               <div className="space-y-3">
                 <input
                   type="text"
@@ -1111,8 +1104,8 @@ export default function DesignerPortal() {
               </div>
             </div>
 
-            <div className="mb-8">
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Recent Messages</h4>
+            <div className="mb-6">
+              <h4 className="text-base font-semibold text-gray-900 mb-3">Recent Messages</h4>
               <div className="space-y-3 max-h-64 overflow-y-auto">
                 {messages.slice(-5).map((msg) => (
                   <div key={msg.id} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
@@ -1136,7 +1129,7 @@ export default function DesignerPortal() {
             </div>
 
             <div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-4">Project Files</h4>
+              <h4 className="text-base font-semibold text-gray-900 mb-3">Project Files</h4>
               <div className="space-y-3 max-h-64 overflow-y-auto">
                 {loadingFiles ? (
                   <div className="text-center py-8">
