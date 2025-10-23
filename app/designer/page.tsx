@@ -479,6 +479,58 @@ export default function DesignerPortal() {
     fetchClientProfiles();
   }, [user, profile]);
 
+  // Function to create missing client profiles
+  const createMissingClientProfiles = async () => {
+    try {
+      console.log('🔧 Creating missing client profiles...');
+      
+      // Get all project user_ids
+      const projectUserIds = projects.map(p => p.user_id);
+      console.log('🔍 Project user IDs:', projectUserIds);
+      
+      // Check which ones don't have profiles
+      const { data: existingProfiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('id', projectUserIds);
+        
+      const existingIds = existingProfiles?.map(p => p.id) || [];
+      const missingIds = projectUserIds.filter(id => !existingIds.includes(id));
+      
+      console.log('🔍 Missing profile IDs:', missingIds);
+      
+      if (missingIds.length === 0) {
+        console.log('✅ All project user_ids have profiles');
+        return;
+      }
+      
+      // Create profiles for missing user_ids
+      const profilesToCreate = missingIds.map(userId => ({
+        id: userId,
+        full_name: `Client ${userId.slice(0, 8)}`,
+        email: null,
+        role: 'client',
+        created_at: new Date().toISOString()
+      }));
+      
+      const { data: newProfiles, error } = await supabase
+        .from('profiles')
+        .insert(profilesToCreate)
+        .select();
+        
+      if (error) {
+        console.error('❌ Error creating profiles:', error);
+      } else {
+        console.log('✅ Created profiles:', newProfiles);
+        // Refresh client profiles
+        fetchClientProfiles();
+      }
+      
+    } catch (err) {
+      console.error('❌ Error creating missing client profiles:', err);
+    }
+  };
+
   // Load messages when project is selected
   useEffect(() => {
     if (selectedProject) {
@@ -649,6 +701,13 @@ export default function DesignerPortal() {
             
             {/* Dashboard Stats */}
             <div className="hidden lg:flex items-center gap-8">
+              <button
+                onClick={createMissingClientProfiles}
+                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                title="Create missing client profiles"
+              >
+                Fix Client Names
+              </button>
               <div className="flex items-center gap-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold">{dashboardStats.totalProjects}</div>
