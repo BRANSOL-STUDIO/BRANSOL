@@ -1271,6 +1271,7 @@ export default function DesignerPortal() {
             </div>
           </motion.div>
         )}
+      </div>
     </div>
   );
 }
