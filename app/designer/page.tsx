@@ -1031,12 +1031,6 @@ export default function DesignerPortal() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Client:</span>
                     <span>{clientProfiles[selectedProject.user_id]?.full_name || 'Unknown'}</span>
-                    <span className="text-xs text-gray-400">(ID: {selectedProject.user_id || 'NO_ID'})</span>
-                    <div className="text-xs text-gray-400">
-                      Profiles loaded: {Object.keys(clientProfiles).length}
-                      <br />
-                      Available IDs: {Object.keys(clientProfiles).join(', ')}
-                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Type:</span>
