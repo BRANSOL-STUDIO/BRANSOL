@@ -943,10 +943,6 @@ export default function DesignerPortal() {
                         {client?.full_name || 'Unknown Client'}
                       </span>
                     </div>
-                    {/* Debug info */}
-                    <div className="text-xs text-gray-400 ml-2">
-                      ID: {project.user_id || 'NO_ID'}
-                    </div>
                   </div>
 
                   {/* Status */}
