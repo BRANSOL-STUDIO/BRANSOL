@@ -11,7 +11,7 @@ import { getDaysLeftInMonth, getTotalDaysInMonth, getMonthProgressPercentage, fo
 
 export default function DashboardPage() {
   const { user, profile, updateProfile } = useAuth();
-  const { projects: supabaseProjects, sendMessage: sendSupabaseMessage, createProject: createSupabaseProject, markProjectMessagesAsRead, completeProject, archiveProject, loading: projectsLoading } = useProjectChat(user?.id);
+  const { projects: supabaseProjects, sendMessage: sendSupabaseMessage, createProject: createSupabaseProject, markProjectMessagesAsRead, completeProject, archiveProject, loading: projectsLoading, lastUpdate, clearLastUpdate } = useProjectChat(user?.id);
   
   const [activeTab, setActiveTab] = useState('overview');
   const [showNewProjectForm, setShowNewProjectForm] = useState(false);
@@ -36,6 +36,26 @@ export default function DashboardPage() {
   });
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Show notification when project status is updated
+  useEffect(() => {
+    if (lastUpdate) {
+      const project = supabaseProjects.find(p => p.id === lastUpdate.projectId);
+      if (project) {
+        console.log('🔄 Project status updated:', {
+          projectName: project.name,
+          newStatus: lastUpdate.status,
+          timestamp: lastUpdate.timestamp
+        });
+        
+        // You can add a toast notification here if you have a toast library
+        // For now, we'll just log it and clear the update after a delay
+        setTimeout(() => {
+          clearLastUpdate();
+        }, 5000);
+      }
+    }
+  }, [lastUpdate, supabaseProjects, clearLastUpdate]);
 
   // Load projects from localStorage on mount
   const getInitialProjects = () => {
@@ -812,6 +832,11 @@ export default function DashboardPage() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1.5">
                               <h3 className="text-lg font-bold text-gray-900">{project.name}</h3>
+                              {lastUpdate && lastUpdate.projectId === project.id && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse">
+                                  Updated
+                                </span>
+                              )}
                               <span className={`px-3 py-1 rounded-lg text-xs font-bold shadow-sm ${
                                 project.status === 'Completed' 
                                   ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'

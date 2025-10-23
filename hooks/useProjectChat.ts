@@ -34,6 +34,7 @@ export interface ProjectWithMessages {
 export function useProjectChat(userId?: string) {
   const [projects, setProjects] = useState<ProjectWithMessages[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<{projectId: string, status: string, timestamp: Date} | null>(null);
   const supabase = createClient();
 
   const fetchProjects = async () => {
@@ -87,10 +88,10 @@ export function useProjectChat(userId?: string) {
   useEffect(() => {
     fetchProjects();
 
-    // Subscribe to real-time message updates for all projects
+    // Subscribe to real-time updates for all projects
     if (userId) {
       const channel = supabase
-        .channel('project-messages')
+        .channel('project-updates')
         .on(
           'postgres_changes',
           {
@@ -107,6 +108,47 @@ export function useProjectChat(userId?: string) {
                   : project
               )
             );
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'projects',
+          },
+          (payload) => {
+            const updatedProject = payload.new;
+            console.log('🔄 Real-time project update received:', {
+              projectId: updatedProject.id,
+              newStatus: updatedProject.status,
+              updatedAt: updatedProject.updated_at,
+              fullPayload: updatedProject
+            });
+            
+            setProjects((current) => {
+              const updatedProjects = current.map((project) =>
+                project.id === updatedProject.id
+                  ? { ...project, ...updatedProject }
+                  : project
+              );
+              
+              console.log('🔄 Updated projects state:', updatedProjects.map(p => ({
+                id: p.id,
+                name: p.name,
+                status: p.status,
+                updated_at: p.updated_at
+              })));
+              
+              // Set last update for notification
+              setLastUpdate({
+                projectId: updatedProject.id,
+                status: updatedProject.status,
+                timestamp: new Date()
+              });
+              
+              return updatedProjects;
+            });
           }
         )
         .subscribe();
@@ -321,12 +363,14 @@ export function useProjectChat(userId?: string) {
   return {
     projects,
     loading,
+    lastUpdate,
     sendMessage,
     createProject,
     markProjectMessagesAsRead,
     completeProject,
     archiveProject,
     refetch: fetchProjects,
+    clearLastUpdate: () => setLastUpdate(null),
   };
 }
 
