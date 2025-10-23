@@ -1267,6 +1267,9 @@ export default function DesignerPortal() {
                     ))
                   )}
                   </div>
+                </div>
+              </div>
+            </div>
           </div>
         </motion.div>
       )}
