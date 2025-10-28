@@ -1416,6 +1416,9 @@ export default function DashboardPage() {
                     const unreadCount = project.messages.filter(m => !m.is_read && m.sender_type === 'designer').length;
                     const lastMessage = project.messages[project.messages.length - 1];
                     
+                    // Skip rendering if no messages exist
+                    if (!lastMessage) return null;
+                    
                     return (
                       <motion.div
                         key={project.id}
@@ -1447,7 +1450,7 @@ export default function DashboardPage() {
                               )}
                             </div>
                             <p className="text-sm text-gray-600 truncate mb-2">
-                              <span className="font-semibold">{lastMessage.sender_name}:</span> {lastMessage.content}
+                              <span className="font-semibold">{lastMessage.sender_name || 'Unknown'}:</span> {lastMessage.content}
                             </p>
                             <div className="flex items-center justify-between">
                               <span className="text-xs text-gray-400">{new Date(lastMessage.created_at).toLocaleDateString()}</span>
