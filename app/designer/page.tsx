@@ -906,15 +906,15 @@ export default function DesignerPortal() {
                     selectedProject?.id === project.id 
                       ? 'bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 shadow-lg' 
                       : project.status === 'Awaiting Designer'
-                      ? 'hover:shadow-md hover:bg-orange-50/50 border-l-4 border-orange-400'
-                      : project.status === 'In Progress'
                       ? 'hover:shadow-md hover:bg-blue-50/50 border-l-4 border-blue-400'
+                      : project.status === 'In Progress'
+                      ? 'hover:shadow-md hover:bg-green-50/50 border-l-4 border-green-400 animate-pulse'
                       : project.status === 'Review'
-                      ? 'hover:shadow-md hover:bg-yellow-50/50 border-l-4 border-yellow-400'
+                      ? 'hover:shadow-md hover:bg-gray-50/50 border-l-4 border-gray-400'
                       : project.status === 'Completed'
                       ? 'hover:shadow-md hover:bg-green-50/50 border-l-4 border-green-400'
                       : project.status === 'Archived'
-                      ? 'hover:shadow-md hover:bg-gray-50/50 border-l-4 border-gray-400 opacity-60'
+                      ? 'hover:shadow-md hover:bg-gray-100/50 border-l-4 border-gray-300 opacity-70'
                       : 'hover:shadow-md hover:bg-gray-50/50'
                   }`}
                   onClick={() => {
@@ -950,6 +950,9 @@ export default function DesignerPortal() {
 
                   {/* Status */}
                   <div className="col-span-2 flex items-center">
+                    {project.status === 'Archived' && (
+                      <CheckCircle className="w-4 h-4 text-gray-500 mr-2" />
+                    )}
                     <select
                       value={project.status}
                       onChange={(e) => {
