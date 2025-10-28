@@ -905,6 +905,16 @@ export default function DesignerPortal() {
                   className={`grid grid-cols-12 gap-6 px-8 py-6 transition-all duration-300 cursor-pointer group ${
                     selectedProject?.id === project.id 
                       ? 'bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 shadow-lg' 
+                      : project.status === 'Awaiting Designer'
+                      ? 'hover:shadow-md hover:bg-orange-50/50 border-l-4 border-orange-400'
+                      : project.status === 'In Progress'
+                      ? 'hover:shadow-md hover:bg-blue-50/50 border-l-4 border-blue-400'
+                      : project.status === 'Review'
+                      ? 'hover:shadow-md hover:bg-yellow-50/50 border-l-4 border-yellow-400'
+                      : project.status === 'Completed'
+                      ? 'hover:shadow-md hover:bg-green-50/50 border-l-4 border-green-400'
+                      : project.status === 'Archived'
+                      ? 'hover:shadow-md hover:bg-gray-50/50 border-l-4 border-gray-400 opacity-60'
                       : 'hover:shadow-md hover:bg-gray-50/50'
                   }`}
                   onClick={() => {
