@@ -246,14 +246,33 @@ export function useProjectChat(userId?: string) {
   };
 
   const markProjectMessagesAsRead = async (projectId: string) => {
+    if (!userId) {
+      console.log('⏭️ Skipping mark messages as read - no userId');
+      return;
+    }
+
     try {
-      const { error } = await supabase
+      console.log('🔵 Marking messages as read for project:', projectId);
+      
+      const { data, error } = await supabase
         .from('messages')
         .update({ is_read: true })
         .eq('project_id', projectId)
-        .eq('sender_type', 'designer'); // Only mark designer messages as read
+        .eq('sender_type', 'designer') // Only mark designer messages as read
+        .select();
 
-      if (error) throw error;
+      console.log('🔵 Mark messages response:', { data, error });
+
+      if (error) {
+        console.error('🔴 Error marking messages as read:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          fullError: error
+        });
+        throw error;
+      }
 
       // Update local state
       setProjects(prev => 
@@ -270,8 +289,15 @@ export function useProjectChat(userId?: string) {
             : project
         )
       );
+      
+      console.log('✅ Successfully marked messages as read');
     } catch (err) {
-      console.error('Error marking project messages as read:', err);
+      console.error('🔴 Error marking project messages as read:', {
+        error: err,
+        type: typeof err,
+        keys: err ? Object.keys(err) : 'null',
+        message: err instanceof Error ? err.message : 'Unknown error'
+      });
     }
   };
 
