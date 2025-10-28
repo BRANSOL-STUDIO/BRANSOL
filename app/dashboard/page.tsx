@@ -719,8 +719,12 @@ export default function DashboardPage() {
                             project.status === 'Completed' 
                               ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
                               : project.status === 'In Progress'
+                              ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+                              : project.status === 'Awaiting Designer'
                               ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
-                              : 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
+                              : project.status === 'Review'
+                              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
+                              : 'bg-gradient-to-r from-gray-500 to-slate-500 text-white'
                           }`}>
                             {project.status}
                           </span>
@@ -841,8 +845,12 @@ export default function DashboardPage() {
                                 project.status === 'Completed' 
                                   ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
                                   : project.status === 'In Progress'
+                                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+                                  : project.status === 'Awaiting Designer'
                                   ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
-                                  : 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
+                                  : project.status === 'Review'
+                                  ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
+                                  : 'bg-gradient-to-r from-gray-500 to-slate-500 text-white'
                               }`}>
                                 {project.status}
                               </span>
@@ -964,8 +972,12 @@ export default function DashboardPage() {
                                   project.status === 'Completed' 
                                     ? 'bg-green-500 text-white'
                                     : project.status === 'In Progress'
+                                    ? 'bg-green-500 text-white'
+                                    : project.status === 'Awaiting Designer'
                                     ? 'bg-blue-500 text-white'
-                                    : 'bg-yellow-500 text-white'
+                                    : project.status === 'Review'
+                                    ? 'bg-yellow-500 text-white'
+                                    : 'bg-gray-500 text-white'
                                 }`}>
                                   {project.status}
                                 </span>
@@ -1443,8 +1455,12 @@ export default function DashboardPage() {
                                 project.status === 'Completed' 
                                   ? 'bg-green-100 text-green-700'
                                   : project.status === 'In Progress'
+                                  ? 'bg-green-100 text-green-700'
+                                  : project.status === 'Awaiting Designer'
                                   ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-yellow-100 text-yellow-700'
+                                  : project.status === 'Review'
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-gray-100 text-gray-700'
                               }`}>
                                 {project.status}
                               </span>

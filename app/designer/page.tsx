@@ -801,12 +801,12 @@ export default function DesignerPortal() {
                 onClick={() => setActiveSection('awaiting')}
                 className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
                   activeSection === 'awaiting'
-                    ? 'bg-white text-orange-600 shadow-sm'
+                    ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-orange-600" />
+                  <Clock className="w-4 h-4 text-blue-600" />
                   Awaiting Designer ({projects.filter(p => p.status === 'Awaiting Designer').length})
                 </div>
               </button>
@@ -814,12 +814,12 @@ export default function DesignerPortal() {
                 onClick={() => setActiveSection('active')}
                 className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
                   activeSection === 'active'
-                    ? 'bg-white text-blue-600 shadow-sm'
+                    ? 'bg-white text-green-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-blue-600" />
+                  <Clock className="w-4 h-4 text-green-600" />
                   Active ({projects.filter(p => p.status === 'In Progress').length})
                 </div>
               </button>
