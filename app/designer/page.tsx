@@ -597,11 +597,11 @@ export default function DesignerPortal() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'Awaiting Designer':
-        return <Clock className="w-4 h-4 text-orange-600" />;
+        return <Clock className="w-4 h-4 text-blue-600" />;
       case 'Briefing':
         return <MessageSquare className="w-4 h-4 text-purple-600" />;
       case 'In Progress':
-        return <Clock className="w-4 h-4 text-blue-600" />;
+        return <Clock className="w-4 h-4 text-green-600" />;
       case 'Review':
         return <AlertCircle className="w-4 h-4 text-yellow-600" />;
       case 'Revision':
@@ -910,7 +910,7 @@ export default function DesignerPortal() {
                       : project.status === 'In Progress'
                       ? 'hover:shadow-md hover:bg-green-50/50 border-l-4 border-green-400 animate-pulse'
                       : project.status === 'Review'
-                      ? 'hover:shadow-md hover:bg-gray-50/50 border-l-4 border-gray-400'
+                      ? 'hover:shadow-md hover:bg-yellow-50/50 border-l-4 border-yellow-400'
                       : project.status === 'Completed'
                       ? 'hover:shadow-md hover:bg-green-50/50 border-l-4 border-green-400'
                       : project.status === 'Archived'
@@ -925,7 +925,19 @@ export default function DesignerPortal() {
                 >
                   {/* Enhanced Project Info */}
                   <div className="col-span-4 flex items-center gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-100 to-blue-100 rounded-xl flex items-center justify-center shadow-sm">
+                    <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
+                      project.status === 'Awaiting Designer'
+                        ? 'bg-gradient-to-br from-blue-100 to-blue-200'
+                        : project.status === 'In Progress'
+                        ? 'bg-gradient-to-br from-green-100 to-green-200'
+                        : project.status === 'Review'
+                        ? 'bg-gradient-to-br from-yellow-100 to-yellow-200'
+                        : project.status === 'Completed'
+                        ? 'bg-gradient-to-br from-green-100 to-green-200'
+                        : project.status === 'Archived'
+                        ? 'bg-gradient-to-br from-gray-100 to-gray-200'
+                        : 'bg-gradient-to-br from-purple-100 to-blue-100'
+                    }`}>
                       {getStatusIcon(project.status)}
                     </div>
                     <div className="flex-1 min-w-0">
