@@ -120,12 +120,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
+      // Normalize email - trim whitespace and convert to lowercase
+      const normalizedEmail = email.trim().toLowerCase();
+      
+      console.log('🔵 Attempting to sign in:', { 
+        email: normalizedEmail, 
+        passwordLength: password.length,
+        timestamp: new Date().toISOString()
+      });
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
         password,
       });
-      return { error };
+
+      if (error) {
+        console.error('🔴 Sign in error:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+        });
+
+        // Provide user-friendly error messages
+        let errorMessage = error.message;
+        let helpfulHint = '';
+        
+        if (error.message.includes('Invalid login credentials') || 
+            error.message.includes('Invalid credentials') ||
+            error.status === 400) {
+          errorMessage = 'Invalid email or password.';
+          helpfulHint = 'Please check your credentials. If you signed up via Stripe, check your receipt email for your password.';
+        } else if (error.message.includes('Email not confirmed') || 
+                   error.message.includes('email_not_confirmed')) {
+          errorMessage = 'Please verify your email address before signing in.';
+          helpfulHint = 'Check your inbox for a confirmation email and click the verification link.';
+        } else if (error.message.includes('Too many requests') || 
+                   error.message.includes('rate_limit')) {
+          errorMessage = 'Too many login attempts.';
+          helpfulHint = 'Please wait a few minutes and try again.';
+        } else if (error.message.includes('User not found')) {
+          errorMessage = 'No account found with this email address.';
+          helpfulHint = 'Please sign up first or check if you used a different email.';
+        }
+
+        // Return error with helpful message
+        const enhancedError = {
+          ...error,
+          message: helpfulHint ? `${errorMessage} ${helpfulHint}` : errorMessage,
+          originalMessage: error.message,
+        };
+
+        return { error: enhancedError };
+      }
+
+      console.log('✅ Sign in successful:', {
+        userId: data.user?.id,
+        email: data.user?.email,
+      });
+
+      // If successful, the auth state change listener will handle profile loading
+      return { error: null };
     } catch (error) {
+      console.error('🔴 Unexpected sign in error:', error);
       return { error: error as Error };
     }
   };
@@ -219,6 +275,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      /**
+       * Send password reset email
+       * 
+       * Supabase will send an email with a reset link.
+       * The user clicks the link and is redirected to the reset password page.
+       * 
+       * IMPORTANT: Configure the redirect URL in Supabase Dashboard:
+       * 1. Go to Authentication > URL Configuration
+       * 2. Set "Site URL" to your domain
+       * 3. Add redirect URL: http://localhost:3000/reset-password (for local)
+       * 4. Add redirect URL: https://yourdomain.com/reset-password (for production)
+       */
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        // Provide user-friendly error messages
+        let errorMessage = error.message;
+        
+        if (error.message.includes('rate limit')) {
+          errorMessage = 'Too many requests. Please wait a few minutes and try again.';
+        } else if (error.message.includes('email')) {
+          errorMessage = 'Please enter a valid email address.';
+        }
+
+        return { error: { ...error, message: errorMessage } };
+      }
+
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    try {
+      /**
+       * Update password after reset
+       * 
+       * This is called after the user clicks the reset link in their email
+       * and sets a new password.
+       */
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        let errorMessage = error.message;
+        
+        if (error.message.includes('password')) {
+          errorMessage = 'Password must be at least 6 characters long.';
+        }
+
+        return { error: { ...error, message: errorMessage } };
+      }
+
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
   const signOut = async () => {
     try {
       console.log('🔄 Starting signOut process...');
@@ -303,6 +424,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
+    resetPassword,
+    updatePassword,
     updateProfile,
   };
 

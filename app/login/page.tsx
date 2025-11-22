@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Mail, Lock, AlertCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,6 +20,15 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   
   const redirectTo = searchParams.get('redirect') || '/dashboard';
+  const passwordReset = searchParams.get('passwordReset') === 'true';
+
+  // Show success message if redirected from password reset
+  useEffect(() => {
+    if (passwordReset) {
+      // You could show a success message here
+      console.log('Password reset successful');
+    }
+  }, [passwordReset]);
 
   // Auto-redirect when profile loads after successful login
   useEffect(() => {
@@ -61,17 +70,40 @@ function LoginForm() {
     setError('');
     setLoading(true);
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
+    // Validate password is not empty
+    if (!password || password.length === 0) {
+      setError('Please enter your password');
+      setLoading(false);
+      return;
+    }
+
     console.log('🔵 Starting login process...');
 
-    const { error: signInError } = await signIn(email, password);
+    try {
+      const { error: signInError } = await signIn(email, password);
 
-    if (signInError) {
-      console.error('🔴 Login error:', signInError);
-      setError(signInError.message);
+      if (signInError) {
+        console.error('🔴 Login error:', signInError);
+        // Use the user-friendly error message from AuthContext
+        setError(signInError.message || 'Invalid login credentials. Please check your email and password.');
+        setLoading(false);
+      } else {
+        console.log('✅ Login successful, profile will load and redirect automatically');
+        // The useEffect above will handle the redirect when profile loads
+        // Don't set loading to false here - let the redirect handle it
+      }
+    } catch (err: any) {
+      console.error('🔴 Unexpected login error:', err);
+      setError(err.message || 'An unexpected error occurred. Please try again.');
       setLoading(false);
-    } else {
-      console.log('✅ Login successful, profile will load and redirect automatically');
-      // The useEffect above will handle the redirect when profile loads
     }
   };
 
@@ -96,6 +128,20 @@ function LoginForm() {
                 <p className="text-gray-600">Sign in to your client portal</p>
               </div>
 
+              {passwordReset && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3"
+                >
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-green-900">Password Reset Successful</p>
+                    <p className="text-sm text-green-700">You can now sign in with your new password.</p>
+                  </div>
+                </motion.div>
+              )}
+
               {error && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
@@ -103,9 +149,20 @@ function LoginForm() {
                   className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3"
                 >
                   <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div>
+                  <div className="flex-1">
                     <p className="text-sm font-semibold text-red-900">Error</p>
                     <p className="text-sm text-red-700">{error}</p>
+                    {error.includes('Invalid email or password') && (
+                      <div className="mt-3 pt-3 border-t border-red-200">
+                        <p className="text-xs text-red-600 font-medium mb-2">Troubleshooting:</p>
+                        <ul className="text-xs text-red-600 space-y-1 list-disc list-inside">
+                          <li>If you signed up via Stripe, check your receipt email for your password</li>
+                          <li>Make sure you're using the correct email address</li>
+                          <li>Check if email confirmation is required (check your inbox)</li>
+                          <li>Try resetting your password using "Forgot password?"</li>
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -150,9 +207,9 @@ function LoginForm() {
                     <input type="checkbox" className="w-4 h-4 text-purple-600 rounded" />
                     <span className="text-sm text-gray-600">Remember me</span>
                   </label>
-                  <a href="#" className="text-sm text-purple-600 hover:text-purple-700 font-semibold">
+                  <Link href="/forgot-password" className="text-sm text-purple-600 hover:text-purple-700 font-semibold">
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
 
                 <button

@@ -86,13 +86,17 @@ export default function SubscriptionsPage() {
               className="text-center max-w-4xl mx-auto"
             >
               <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-                Choose Your Design
+                Design Subscriptions
                 <span className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                  Subscription
+                  That Scale With You
                 </span>
               </h1>
               <p className="text-xl md:text-2xl text-purple-200 mb-8 leading-relaxed">
                 Professional design services delivered monthly. Pause, cancel, or upgrade anytime.
+              </p>
+              <p className="text-lg text-purple-300 mb-8 max-w-2xl mx-auto">
+                Get unlimited design requests, priority support, and access to our full creative team. 
+                Perfect for businesses that need consistent, high-quality design work.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <div className="bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 text-white">
@@ -112,6 +116,19 @@ export default function SubscriptionsPage() {
         {/* Plans Section */}
         <section className="py-20 -mt-10 relative z-20">
           <div className="container">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Choose Your Plan
+              </h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                All plans include unlimited revisions, source files, and priority support
+              </p>
+            </motion.div>
             <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
               {plans.map((plan, index) => (
                 <motion.div
@@ -163,11 +180,14 @@ export default function SubscriptionsPage() {
                         <div className="text-center">
                           <div className="mb-2">
                             <span className="text-4xl font-bold">${plan.price.toLocaleString()}</span>
-                            <span className="text-purple-200 ml-2">USD</span>
+                            <span className="text-purple-200 ml-2 text-lg">/month</span>
                           </div>
                           <div className="text-sm text-purple-200">
-                            <span className="text-purple-300">{plan.btc} BTC</span>
-                            <span className="text-purple-200 ml-2">(5% off)</span>
+                            <span className="text-purple-300 font-semibold">{plan.btc} BTC</span>
+                            <span className="text-purple-200 ml-2">(5% discount)</span>
+                          </div>
+                          <div className="mt-3 text-xs text-purple-300">
+                            Billed monthly • Cancel anytime
                           </div>
                         </div>
                       </div>
@@ -175,7 +195,12 @@ export default function SubscriptionsPage() {
 
                     {/* Features */}
                     <div className="p-8">
-                      <ul className="space-y-4 mb-8">
+                      <div className="mb-6">
+                        <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                          What's Included
+                        </h4>
+                      </div>
+                      <ul className="space-y-3 mb-8">
                         {plan.features.map((feature, featureIndex) => (
                           <motion.li
                             key={featureIndex}
@@ -187,7 +212,7 @@ export default function SubscriptionsPage() {
                             <div className="w-5 h-5 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                               <Check className="w-3 h-3 text-white" />
                             </div>
-                            <span className="text-gray-700">{feature}</span>
+                            <span className="text-gray-700 text-sm leading-relaxed">{feature}</span>
                           </motion.li>
                         ))}
                       </ul>
@@ -212,6 +237,72 @@ export default function SubscriptionsPage() {
           </div>
         </section>
 
+        {/* Benefits Section */}
+        <section className="py-20 bg-white">
+          <div className="container">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-center max-w-3xl mx-auto mb-16"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Why Choose BRANSOL Subscriptions?
+              </h2>
+              <p className="text-lg text-gray-600">
+                Everything you need to scale your brand design
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-20">
+              {[
+                {
+                  icon: "⚡",
+                  title: "Lightning Fast",
+                  description: "Get your designs delivered within 72 hours. No waiting weeks for results."
+                },
+                {
+                  icon: "🎨",
+                  title: "Unlimited Revisions",
+                  description: "Not happy with something? We'll revise until it's perfect. No extra charges."
+                },
+                {
+                  icon: "📁",
+                  title: "Source Files Included",
+                  description: "Own all your designs. Get editable source files for every project."
+                },
+                {
+                  icon: "👥",
+                  title: "Dedicated Team",
+                  description: "Work with experienced designers who understand your brand vision."
+                },
+                {
+                  icon: "🔄",
+                  title: "Flexible Billing",
+                  description: "Pause, cancel, or upgrade anytime. No long-term contracts required."
+                },
+                {
+                  icon: "💳",
+                  title: "Crypto Payments",
+                  description: "Pay with Bitcoin and save 5%. Traditional payment methods also accepted."
+                }
+              ].map((benefit, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className="text-center p-6"
+                >
+                  <div className="text-4xl mb-4">{benefit.icon}</div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{benefit.title}</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">{benefit.description}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* FAQ Section */}
         <section className="py-20 bg-gray-50">
           <div className="container">
@@ -221,7 +312,7 @@ export default function SubscriptionsPage() {
               transition={{ duration: 0.8 }}
               className="text-center max-w-3xl mx-auto mb-16"
             >
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                 Frequently Asked Questions
               </h2>
               <p className="text-lg text-gray-600">
@@ -253,9 +344,9 @@ export default function SubscriptionsPage() {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="bg-white rounded-2xl p-6 shadow-lg"
+                  className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
                 >
-                  <h3 className="font-semibold text-gray-900 mb-3">{faq.question}</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3 text-lg">{faq.question}</h3>
                   <p className="text-gray-600 text-sm leading-relaxed">{faq.answer}</p>
                 </motion.div>
               ))}
