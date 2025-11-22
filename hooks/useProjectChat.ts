@@ -264,13 +264,15 @@ export function useProjectChat(userId?: string) {
       console.log('🔵 Mark messages response:', { data, error });
 
       if (error) {
-        console.error('🔴 Error marking messages as read:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-          fullError: error
-        });
+        const errorDetails = {
+          message: error?.message || 'No message',
+          details: error?.details || 'No details',
+          hint: error?.hint || 'No hint',
+          code: error?.code || 'No code',
+          errorType: typeof error,
+          errorStringified: JSON.stringify(error, Object.getOwnPropertyNames(error))
+        };
+        console.error('🔴 Error marking messages as read:', errorDetails);
         throw error;
       }
 
@@ -292,12 +294,15 @@ export function useProjectChat(userId?: string) {
       
       console.log('✅ Successfully marked messages as read');
     } catch (err) {
-      console.error('🔴 Error marking project messages as read:', {
-        error: err,
-        type: typeof err,
-        keys: err ? Object.keys(err) : 'null',
-        message: err instanceof Error ? err.message : 'Unknown error'
+      console.error('🔴 Exception caught in markProjectMessagesAsRead:', {
+        errorType: typeof err,
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorKeys: err && typeof err === 'object' ? Object.keys(err) : 'N/A',
+        fullError: err
       });
+      
+      // Don't rethrow - just log and continue
+      // The UI will update based on local state anyway
     }
   };
 

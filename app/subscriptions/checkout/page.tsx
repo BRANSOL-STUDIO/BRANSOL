@@ -23,6 +23,8 @@ function CheckoutContent() {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [sessionId, setSessionId] = useState('');
+  const [message, setMessage] = useState('');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'quarterly' | 'annual'>('monthly');
   const [formData, setFormData] = useState({
     firstName: '',
@@ -32,6 +34,31 @@ function CheckoutContent() {
     phone: '',
     projectDetails: ''
   });
+
+  // Map plan slugs to Stripe lookup keys
+  // Update these with your actual Stripe Price lookup keys
+  const stripeLookupKeys: Record<string, string> = {
+    'essentials': 'Essentials-c7c18be', // Update with your actual lookup key
+    'growth-kit': 'GrowthKit-c7c18be', // Update with your actual lookup key
+    'ecosystem': 'Ecosystem-c7c18be', // Update with your actual lookup key
+  };
+
+  // Check URL params for success/cancel on mount
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+    const sessionIdParam = searchParams.get('session_id');
+
+    if (success === 'true' && sessionIdParam) {
+      setSuccess(true);
+      setSessionId(sessionIdParam);
+    }
+
+    if (canceled === 'true') {
+      setSuccess(false);
+      setMessage("Order canceled -- continue to shop around and checkout when you're ready.");
+    }
+  }, [searchParams]);
 
   // Plan data based on slug
   const plans: Record<string, SubscriptionPlan> = {
@@ -114,12 +141,76 @@ function CheckoutContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    
-    // Simulate subscription processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsProcessing(false);
-    setIsSuccess(true);
+    setMessage('');
+
+    try {
+      const lookupKey = stripeLookupKeys[planSlug || 'growth-kit'];
+      
+      if (!lookupKey) {
+        throw new Error('Stripe lookup key not found for this plan');
+      }
+
+      // Create form data for Stripe checkout
+      const formDataToSend = new FormData();
+      formDataToSend.append('lookup_key', lookupKey);
+      formDataToSend.append('billing_cycle', billingCycle);
+      formDataToSend.append('email', formData.email);
+
+      // Call Stripe checkout API
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        body: formDataToSend,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || data.error || 'Failed to create checkout session');
+      }
+
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      setMessage(error.message || 'An error occurred. Please try again.');
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePortalSession = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessing(true);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('session_id', sessionId);
+
+      const response = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        body: formDataToSend,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || data.error || 'Failed to create portal session');
+      }
+
+      // Redirect to Stripe Customer Portal
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No portal URL returned');
+      }
+    } catch (error: any) {
+      console.error('Portal session error:', error);
+      setMessage(error.message || 'An error occurred. Please try again.');
+      setIsProcessing(false);
+    }
   };
 
   if (!selectedPlan) {
@@ -143,11 +234,12 @@ function CheckoutContent() {
     );
   }
 
-  if (isSuccess) {
+  // Show success page with portal session button
+  if (isSuccess && sessionId) {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <main className="min-h-screen bg-gray-50 flex items-center justify-center py-12">
           <div className="text-center max-w-md mx-auto">
             <motion.div
               initial={{ scale: 0 }}
@@ -168,11 +260,44 @@ function CheckoutContent() {
                 <strong>First Payment:</strong> ${pricing.price.toLocaleString()}
               </p>
             </div>
+            <form onSubmit={handlePortalSession} className="mb-4">
+              <input type="hidden" name="session_id" value={sessionId} />
+              <button
+                type="submit"
+                disabled={isProcessing}
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 mb-4"
+              >
+                {isProcessing ? 'Loading...' : 'Manage your billing information'}
+              </button>
+            </form>
             <Link 
               href="/"
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200"
+              className="inline-block text-purple-600 hover:text-purple-700 font-semibold transition-colors duration-200"
             >
               Return Home
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  // Show error message if canceled or error occurred
+  if (message) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+              <p className="text-yellow-800">{message}</p>
+            </div>
+            <Link 
+              href="/subscriptions"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200"
+            >
+              Back to Plans
             </Link>
           </div>
         </main>
@@ -358,12 +483,12 @@ function CheckoutContent() {
                   {isProcessing ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Setting Up Subscription...
+                      Redirecting to Checkout...
                     </>
                   ) : (
                     <>
                       <Lock className="w-5 h-5" />
-                      Start {selectedPlan.name} Subscription - ${pricing.price.toLocaleString()}
+                      Checkout - ${pricing.price.toLocaleString()}
                     </>
                   )}
                 </button>
