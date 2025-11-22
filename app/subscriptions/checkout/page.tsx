@@ -50,12 +50,12 @@ function CheckoutContent() {
     const sessionIdParam = searchParams.get('session_id');
 
     if (success === 'true' && sessionIdParam) {
-      setSuccess(true);
+      setIsSuccess(true);
       setSessionId(sessionIdParam);
     }
 
     if (canceled === 'true') {
-      setSuccess(false);
+      setIsSuccess(false);
       setMessage("Order canceled -- continue to shop around and checkout when you're ready.");
     }
   }, [searchParams]);
@@ -64,8 +64,8 @@ function CheckoutContent() {
   const plans: Record<string, SubscriptionPlan> = {
     'essentials': {
       name: "Essentials",
-      price: 1500,
-      btc: 0.025,
+      price: 3500,
+      btc: 0.040,
       description: "Perfect for startups and small businesses",
       features: [
         "Logo & brand system",
@@ -79,8 +79,8 @@ function CheckoutContent() {
     },
     'growth-kit': {
       name: "Growth Kit",
-      price: 3500,
-      btc: 0.06,
+      price: 5500,
+      btc: 0.063,
       description: "Most popular choice for growing businesses",
       features: [
         "Everything in Essentials",
@@ -95,8 +95,8 @@ function CheckoutContent() {
     },
     'ecosystem': {
       name: "Ecosystem",
-      price: 7500,
-      btc: 0.13,
+      price: 8000,
+      btc: 0.091,
       description: "Complete brand ecosystem for established companies",
       features: [
         "Everything in Growth Kit",
@@ -162,7 +162,21 @@ function CheckoutContent() {
         body: formDataToSend,
       });
 
-      const data = await response.json();
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await response.json();
+        } catch (jsonError) {
+          throw new Error('Invalid response from server');
+        }
+      } else {
+        // If not JSON, read as text for error message
+        const text = await response.text();
+        throw new Error(text || 'Failed to create checkout session');
+      }
 
       if (!response.ok) {
         throw new Error(data.error?.message || data.error || 'Failed to create checkout session');

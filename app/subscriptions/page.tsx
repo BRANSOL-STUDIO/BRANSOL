@@ -11,8 +11,8 @@ export default function SubscriptionsPage() {
   const plans = [
     {
       name: "Essentials",
-      price: 1500,
-      btc: 0.025,
+      price: 3500,
+      btc: 0.040,
       description: "Perfect for startups and small businesses",
       icon: Zap,
       color: "from-blue-500 to-purple-600",
@@ -28,8 +28,8 @@ export default function SubscriptionsPage() {
     },
     {
       name: "Growth Kit",
-      price: 3500,
-      btc: 0.06,
+      price: 5500,
+      btc: 0.063,
       description: "Most popular choice for growing businesses",
       icon: Users,
       color: "from-purple-500 to-pink-600",
@@ -46,8 +46,8 @@ export default function SubscriptionsPage() {
     },
     {
       name: "Ecosystem",
-      price: 7500,
-      btc: 0.13,
+      price: 8000,
+      btc: 0.091,
       description: "Complete brand ecosystem for established companies",
       icon: Crown,
       color: "from-pink-500 to-red-600",

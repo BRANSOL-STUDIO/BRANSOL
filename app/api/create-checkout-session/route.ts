@@ -1,12 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
-});
+function getStripeInstance() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error('STRIPE_SECRET_KEY environment variable is not set. Please add it to your .env.local file.');
+  }
+  return new Stripe(secretKey, {
+    apiVersion: '2024-11-20.acacia',
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe secret key is configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        { error: { message: 'Stripe secret key is not configured. Please add STRIPE_SECRET_KEY to your .env.local file.' } },
+        { status: 500 }
+      );
+    }
+
+    const stripe = getStripeInstance();
+
     const formData = await request.formData();
     const lookupKey = formData.get('lookup_key') as string;
     const billingCycle = formData.get('billing_cycle') as string || 'monthly';
@@ -14,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     if (!lookupKey) {
       return NextResponse.json(
-        { error: 'Missing lookup_key' },
+        { error: { message: 'Missing lookup_key' } },
         { status: 400 }
       );
     }
@@ -53,11 +69,21 @@ export async function POST(request: NextRequest) {
     });
 
     // Return JSON with URL for client-side redirect
+    if (!session.url) {
+      return NextResponse.json(
+        { error: { message: 'Checkout session created but no URL returned' } },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error: any) {
     console.error('Error creating checkout session:', error);
+    
+    // Ensure we always return valid JSON
+    const errorMessage = error?.message || error?.error?.message || 'Failed to create checkout session';
     return NextResponse.json(
-      { error: error.message || 'Failed to create checkout session' },
+      { error: { message: errorMessage } },
       { status: 500 }
     );
   }
