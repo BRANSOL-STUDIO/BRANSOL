@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -180,15 +181,13 @@ export default function ContactPage() {
                   <p className="text-gray-600 mb-6">
                     Book a free consultation call to discuss your project and how we can help.
                   </p>
-                  <a
-                    href="https://calendly.com/bransol"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href="/book-a-call"
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg"
                   >
                     <Phone className="w-5 h-5" />
                     Book a Call
-                  </a>
+                  </Link>
                 </div>
               </motion.div>
             </div>

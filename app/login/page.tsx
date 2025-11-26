@@ -221,15 +221,6 @@ function LoginForm() {
                 </button>
               </form>
 
-              <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
-                  Don&apos;t have an account?{' '}
-                  <Link href="/signup" className="text-purple-600 hover:text-purple-700 font-semibold">
-                    Sign up
-                  </Link>
-                </p>
-              </div>
-
               <div className="mt-6 pt-6 border-t border-gray-200 text-center">
                 <p className="text-sm text-gray-500">
                   Demo mode not available for Client Portal

@@ -10,7 +10,7 @@ export const SITE = {
   ctas: {
     primary: { label: "Start Now", href: "/start" },
     secondary: { label: "See Plans", href: "/packages" },
-    book: { label: "Book a Call", href: process.env.NEXT_PUBLIC_CALENDLY_URL || "#" }
+    book: { label: "Book a Call", href: "/book-a-call" }
   },
   sections: {
     hero: {

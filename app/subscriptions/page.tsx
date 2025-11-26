@@ -119,7 +119,8 @@ export default function SubscriptionsPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.4 }}
               className="text-center mb-12"
             >
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -135,7 +136,8 @@ export default function SubscriptionsPage() {
                   key={plan.name}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.2 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
                   className={`relative ${
                     plan.popular 
                       ? 'lg:scale-105 z-10' 
@@ -145,15 +147,10 @@ export default function SubscriptionsPage() {
                   {/* Popular Badge */}
                   {plan.popular && (
                     <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-20">
-                      <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        whileInView={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.5, delay: 0.3 }}
-                        className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-sm font-bold px-6 py-2 rounded-full shadow-lg flex items-center gap-2"
-                      >
+                      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-sm font-bold px-6 py-2 rounded-full shadow-lg flex items-center gap-2">
                         <Star className="w-4 h-4 fill-current" />
                         Most Popular
-                      </motion.div>
+                      </div>
                     </div>
                   )}
 
@@ -202,18 +199,15 @@ export default function SubscriptionsPage() {
                       </div>
                       <ul className="space-y-3 mb-8">
                         {plan.features.map((feature, featureIndex) => (
-                          <motion.li
+                          <li
                             key={featureIndex}
-                            initial={{ opacity: 0, x: -20 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.4, delay: (index * 0.2) + (featureIndex * 0.1) }}
                             className="flex items-start gap-3"
                           >
                             <div className="w-5 h-5 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                               <Check className="w-3 h-3 text-white" />
                             </div>
                             <span className="text-gray-700 text-sm leading-relaxed">{feature}</span>
-                          </motion.li>
+                          </li>
                         ))}
                       </ul>
 
@@ -291,7 +285,8 @@ export default function SubscriptionsPage() {
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
                   className="text-center p-6"
                 >
                   <div className="text-4xl mb-4">{benefit.icon}</div>
@@ -309,7 +304,8 @@ export default function SubscriptionsPage() {
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5 }}
               className="text-center max-w-3xl mx-auto mb-16"
             >
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -339,16 +335,13 @@ export default function SubscriptionsPage() {
                   answer: "Yes! You own 100% of the designs we create for you. We provide all source files and transfer full rights upon completion."
                 }
               ].map((faq, index) => (
-                <motion.div
+                <div
                   key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
                   className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
                 >
                   <h3 className="font-semibold text-gray-900 mb-3 text-lg">{faq.question}</h3>
                   <p className="text-gray-600 text-sm leading-relaxed">{faq.answer}</p>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
@@ -360,7 +353,8 @@ export default function SubscriptionsPage() {
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5 }}
               className="text-center max-w-3xl mx-auto"
             >
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
