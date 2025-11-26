@@ -156,7 +156,7 @@ function LoginForm() {
                       <div className="mt-3 pt-3 border-t border-red-200">
                         <p className="text-xs text-red-600 font-medium mb-2">Troubleshooting:</p>
                         <ul className="text-xs text-red-600 space-y-1 list-disc list-inside">
-                          <li>If you signed up via Stripe, check your receipt email for your password</li>
+                          <li>If you received a welcome email, check it for your password</li>
                           <li>Make sure you're using the correct email address</li>
                           <li>Check if email confirmation is required (check your inbox)</li>
                           <li>Try resetting your password using "Forgot password?"</li>

@@ -14,7 +14,7 @@ export default function HomePage() {
       
       <main>
         {/* Hero Section */}
-        <section id="hero" className="py-32 md:py-40 lg:py-48 relative overflow-hidden" style={{ borderRadius: 0 }}>
+        <section id="hero" className="pt-0 pb-8 md:pb-12 lg:pb-0 relative overflow-hidden" style={{ borderRadius: 0 }}>
           {/* Animated Gradient Background */}
           <motion.div
             className="absolute inset-0"
@@ -66,25 +66,27 @@ export default function HomePage() {
             />
           </div>
           
-          <div className="container relative z-10">
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-              {/* Left Column - Text Content */}
-              <div className="space-y-8">
+          <div className="container relative z-10 px-4 sm:px-6 lg:px-8">
+            {/* Hero Content - Centered on Mobile, Two Column on Desktop */}
+            <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center py-8 md:py-12 lg:py-0">
+              {/* Text Content - Centered on Mobile, Left on Desktop */}
+              <div className="space-y-4 md:space-y-6 lg:space-y-8 text-center lg:text-left w-full">
                 <motion.h1
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.1 }}
-                  className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.1] tracking-tight"
+                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-[1.15] tracking-tight"
                 >
-                  The Creative Partner for Brands That Want to{" "}
-                  <span className="font-serif italic text-white/95 block mt-2">Lead, Not Follow</span>
+                  <span className="block">The Creative Partner</span>
+                  <span className="block">for Brands That Want to</span>
+                  <span className="font-serif italic text-white/95 block mt-1">Lead, Not Follow</span>
                 </motion.h1>
                 
                 <motion.p
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.3 }}
-                  className="text-lg md:text-xl lg:text-2xl text-white/90 leading-relaxed max-w-xl"
+                  className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-white/90 leading-relaxed max-w-xl mx-auto lg:mx-0"
                 >
                   Professional design services delivered monthly.{' '}
                   <span className="font-semibold inline-block">
@@ -115,18 +117,18 @@ export default function HomePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.5 }}
-                  className="flex flex-col sm:flex-row gap-4 pt-4"
+                  className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 md:pt-4 justify-center lg:justify-start"
                 >
                   <a
                     href="/subscriptions"
-                    className="group bg-white text-[#f12150] hover:bg-gray-50 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] text-center flex items-center justify-center gap-2"
+                    className="group bg-white text-[#f12150] hover:bg-gray-50 px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] text-center flex items-center justify-center gap-2"
                   >
                     <span>{SITE.ctas.primary.label}</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
                   </a>
                   <a
                     href={SITE.ctas.secondary.href}
-                    className="bg-white/10 backdrop-blur-md border-2 border-white/30 text-white hover:bg-white/20 hover:border-white/50 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 text-center"
+                    className="bg-white/10 backdrop-blur-md border-2 border-white/30 text-white hover:bg-white/20 hover:border-white/50 px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 text-center"
                   >
                     {SITE.ctas.secondary.label}
                   </a>
@@ -134,8 +136,8 @@ export default function HomePage() {
 
               </div>
 
-              {/* Right Column - Portfolio Grid with Film Strip Animation */}
-              <div className="relative h-[600px] lg:h-[700px] overflow-hidden">
+              {/* Desktop: Portfolio Grid with Film Strip Animation - Right side */}
+              <div className="hidden lg:block relative h-[700px] w-full overflow-hidden">
                 {/* Portfolio Items Data */}
                 {(() => {
                   const portfolioItems = [
@@ -160,8 +162,10 @@ export default function HomePage() {
 
                   return (
                     <>
-                      {/* First Column - Moving Down */}
-                      <div className="absolute left-0 top-0 w-[calc(33.333%-0.5rem)] h-full overflow-hidden">
+                      {/* Desktop: 3-Column Vertical Scrolling */}
+                      <div className="absolute inset-0">
+                        {/* First Column - Moving Down */}
+                        <div className="absolute left-0 top-0 w-[calc(33.333%-0.5rem)] h-full overflow-hidden">
                         <motion.div
                           className="flex flex-col gap-3 lg:gap-4"
                           animate={{
@@ -252,11 +256,99 @@ export default function HomePage() {
                           ))}
                         </motion.div>
                       </div>
+                      </div>
                     </>
                   );
                 })()}
               </div>
             </div>
+
+          </div>
+
+          {/* Mobile: Horizontal Scrolling Film Strip - Full Width */}
+          <div className="lg:hidden pb-12 relative h-[500px] sm:h-[600px] overflow-hidden w-full">
+            {(() => {
+              const portfolioItems = [
+                { name: 'Zapier', gradient: 'from-orange-500 to-red-500', text: 'DRIVE FOUNDER FROM DAY ZERO' },
+                { name: 'Roland', gradient: 'from-gray-800 to-gray-900', text: 'Digital Piano' },
+                { name: 'Vimeo', gradient: 'from-blue-500 to-cyan-500', text: 'Filmmakers Platform' },
+                { name: 'Amazon', gradient: 'from-yellow-400 to-orange-500', text: 'Pharmacy' },
+                { name: 'OPA!', gradient: 'from-orange-400 to-red-500', text: 'Sushi Brand' },
+                { name: 'Kins', gradient: 'from-green-500 to-emerald-500', text: 'Virtual PT' },
+                { name: 'Brand A', gradient: 'from-purple-500 to-pink-500', text: 'Brand Identity' },
+                { name: 'Brand B', gradient: 'from-indigo-500 to-purple-500', text: 'Logo Design' },
+                { name: 'Brand C', gradient: 'from-teal-500 to-blue-500', text: 'Web Design' },
+              ];
+
+              // Duplicate for seamless looping
+              const createLoopSet = (items: typeof portfolioItems) => [...items, ...items];
+
+              return (
+                <>
+                  {/* First Row - Moving Left */}
+                  <div className="absolute top-0 left-0 w-full h-[calc(50%-0.5rem)] overflow-hidden">
+                    <motion.div
+                      className="flex gap-3 h-full px-4 sm:px-6"
+                      animate={{
+                        x: ['0%', '-50%']
+                      }}
+                      transition={{
+                        duration: 30,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    >
+                      {createLoopSet(portfolioItems).map((item, index) => (
+                        <div
+                          key={`row1-${index}`}
+                          className="w-[140px] sm:w-[160px] h-full rounded-xl overflow-hidden shadow-2xl relative group cursor-pointer flex-shrink-0 transition-all duration-300"
+                        >
+                          <div className={`w-full h-full bg-gradient-to-br ${item.gradient} flex flex-col items-center justify-center p-3 group-hover:scale-105 transition-transform duration-300`}>
+                            <div className="absolute top-2 left-2 text-white text-xs font-bold opacity-90 backdrop-blur-sm bg-black/20 px-2 py-1 rounded-md">
+                              {item.name}
+                            </div>
+                            <div className="text-white text-[10px] sm:text-xs text-center mt-auto opacity-80 font-medium">
+                              {item.text}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
+
+                  {/* Second Row - Moving Right (Opposite Direction) */}
+                  <div className="absolute bottom-0 left-0 w-full h-[calc(50%-0.5rem)] overflow-hidden">
+                    <motion.div
+                      className="flex gap-3 h-full px-4 sm:px-6"
+                      animate={{
+                        x: ['-50%', '0%']
+                      }}
+                      transition={{
+                        duration: 30,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    >
+                      {createLoopSet(portfolioItems).map((item, index) => (
+                        <div
+                          key={`row2-${index}`}
+                          className="w-[140px] sm:w-[160px] h-full rounded-xl overflow-hidden shadow-2xl relative group cursor-pointer flex-shrink-0 transition-all duration-300"
+                        >
+                          <div className={`w-full h-full bg-gradient-to-br ${item.gradient} flex flex-col items-center justify-center p-3 group-hover:scale-105 transition-transform duration-300`}>
+                            <div className="absolute top-2 left-2 text-white text-xs font-bold opacity-90 backdrop-blur-sm bg-black/20 px-2 py-1 rounded-md">
+                              {item.name}
+                            </div>
+                            <div className="text-white text-[10px] sm:text-xs text-center mt-auto opacity-80 font-medium">
+                              {item.text}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </section>
 

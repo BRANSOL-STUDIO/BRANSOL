@@ -149,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             error.message.includes('Invalid credentials') ||
             error.status === 400) {
           errorMessage = 'Invalid email or password.';
-          helpfulHint = 'Please check your credentials. If you signed up via Stripe, check your receipt email for your password.';
+          helpfulHint = 'Please check your credentials. If you received a welcome email, check it for your password.';
         } else if (error.message.includes('Email not confirmed') || 
                    error.message.includes('email_not_confirmed')) {
           errorMessage = 'Please verify your email address before signing in.';

@@ -39,8 +39,6 @@ export async function createUserAccount(
     planName: string;
     planSlug: string;
     billingCycle: string;
-    stripeCustomerId?: string;
-    stripeSubscriptionId?: string;
   }
 ) {
   try {
@@ -60,12 +58,6 @@ export async function createUserAccount(
       try {
         updateData.subscription_plan = subscriptionData.planSlug;
         updateData.subscription_status = 'active';
-        if (subscriptionData.stripeCustomerId) {
-          updateData.stripe_customer_id = subscriptionData.stripeCustomerId;
-        }
-        if (subscriptionData.stripeSubscriptionId) {
-          updateData.stripe_subscription_id = subscriptionData.stripeSubscriptionId;
-        }
       } catch (e) {
         // Columns might not exist yet, just use plan
       }
@@ -118,12 +110,6 @@ export async function createUserAccount(
     try {
       profileData.subscription_plan = subscriptionData.planSlug;
       profileData.subscription_status = 'active';
-      if (subscriptionData.stripeCustomerId) {
-        profileData.stripe_customer_id = subscriptionData.stripeCustomerId;
-      }
-      if (subscriptionData.stripeSubscriptionId) {
-        profileData.stripe_subscription_id = subscriptionData.stripeSubscriptionId;
-      }
     } catch (e) {
       // Columns might not exist yet, just use plan
     }

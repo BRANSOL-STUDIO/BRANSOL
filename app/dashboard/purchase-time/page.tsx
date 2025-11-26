@@ -388,7 +388,7 @@ export default function PurchaseTimePage() {
 
             <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-500">
               <span>🔒</span>
-              <span>Secure payment powered by Stripe</span>
+              <span>Secure payment</span>
             </div>
           </motion.div>
         </div>
