@@ -140,7 +140,12 @@ export default function ProductsPage() {
     fetchProducts();
   }, []);
 
-  const accountId = getAccountId();
+  // Only get accountId on client side
+  const [accountId, setAccountId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    setAccountId(getAccountId());
+  }, []);
 
   return (
     <>
